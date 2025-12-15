@@ -48,7 +48,7 @@ export function Mission() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {values.map((value, index) => (
             <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
-              <img src={value.iconSrc || "/placeholder.svg"} alt="" className="h-20 w-20 mb-4 opacity-80" />
+              <img src={value.iconSrc || "/placeholder.svg"} alt="" className="h-16 w-16 mb-4" />
               <h3 className="text-xl font-bold mb-2">{value.title}</h3>
               <p className="text-muted-foreground leading-relaxed">{value.description}</p>
             </Card>
