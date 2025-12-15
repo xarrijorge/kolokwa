@@ -9,7 +9,7 @@ import { Navigation } from "@/components/navigation"
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen scroll-pt-20">
       <Navigation />
       <Hero />
       <About />
