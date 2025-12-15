@@ -366,7 +366,7 @@ export default function DevFestPage() {
               </div>
             </div>
 
-            <div className="group relative p-6 rounded-xl bg-gradient-to-br from-primary via-secondary to-accent hover:shadow-2xl transition-all duration-300 border border-border sm:col-span-2 lg:col-span-3">
+            {/* <div className="group relative p-6 rounded-xl bg-gradient-to-br from-primary via-secondary to-accent hover:shadow-2xl transition-all duration-300 border border-border sm:col-span-2 lg:col-span-3">
               <div className="flex items-start gap-4 justify-center">
                 <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-white/20 backdrop-blur flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <TrendingUp className="h-6 w-6 text-white" />
@@ -378,7 +378,7 @@ export default function DevFestPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
