@@ -11,23 +11,22 @@ export const metadata: Metadata = {
   title: "Kolokwa TechGuild - Building Liberia's Tech Ecosystem",
   description:
     "A Liberian-born collective of developers, innovators, and builders dedicated to shaping the nation's digital future. Join us for Code & Cocktails and the upcoming KoloKwa DevFest.",
-  generator: "v0.app",
   icons: {
     icon: [
       {
-        url: "/icon-light-32x32.png",
+        url: "/icon.png",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/icon-dark-32x32.png",
+        url: "/icon.png",
         media: "(prefers-color-scheme: dark)",
       },
       {
-        url: "/icon.svg",
+        url: "/favicon.ico",
         type: "image/svg+xml",
       },
     ],
-    apple: "/apple-icon.png",
+    apple: "/icon.png",
   },
 }
 
