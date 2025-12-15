@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import { Calendar, Users, Lightbulb } from "lucide-react"
 
 export function Events() {
@@ -47,8 +48,9 @@ export function Events() {
                   <span className="text-sm">Launching the movement toward DevFest</span>
                 </div>
               </div>
-
-              <Button className="w-full bg-secondary hover:bg-secondary/90">Register for Code & Cocktails</Button>
+              <Link href="/register">
+                <Button className="w-full bg-secondary hover:bg-secondary/90">Register for Code & Cocktails</Button>
+              </Link>
             </div>
           </Card>
 
@@ -84,13 +86,14 @@ export function Events() {
                   <span className="text-sm">Creating partnerships and ecosystem growth</span>
                 </div>
               </div>
-
-              <Button
-                variant="outline"
-                className="w-full border-accent text-accent hover:bg-accent hover:text-accent-foreground bg-transparent"
-              >
-                Stay Updated on DevFest
-              </Button>
+              <Link href="/devfest">
+                <Button
+                  variant="outline"
+                  className="w-full border-accent text-accent hover:bg-accent hover:text-accent-foreground bg-transparent"
+                >
+                  Stay Updated on DevFest
+                </Button>
+              </Link>
             </div>
           </Card>
         </div>

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 
 export function Hero() {
@@ -35,17 +36,21 @@ export function Hero() {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-          <Button size="lg" className="w-full sm:w-auto text-base">
-            Join Code & Cocktails
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="w-full sm:w-auto text-base bg-transparent text-white border-white/30 hover:bg-white/10"
-          >
-            Learn About DevFest
-          </Button>
+          <Link href="/register">
+            <Button size="lg" className="w-full sm:w-auto text-base">
+              Join Code & Cocktails
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
+          <Link href="/devfest">
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full sm:w-auto text-base bg-transparent text-white border-white/30 hover:bg-white/10"
+            >
+              Learn About DevFest
+            </Button>
+          </Link>
         </div>
 
         {/* Event Info Cards */}
