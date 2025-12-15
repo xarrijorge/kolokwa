@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import { useState } from "react"
 import { Menu, X } from "lucide-react"
 
@@ -17,19 +18,21 @@ export function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="/#about" className="text-sm font-medium hover:text-primary transition-colors">
               About
             </a>
-            <a href="#events" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="/#events" className="text-sm font-medium hover:text-primary transition-colors">
               Events
             </a>
-            <a href="#mission" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="/#mission" className="text-sm font-medium hover:text-primary transition-colors">
               Mission
             </a>
-            <a href="#team" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="/#team" className="text-sm font-medium hover:text-primary transition-colors">
               Team
             </a>
-            <Button size="sm">Join Us</Button>
+            <Link href="/contact">
+              <Button size="sm">Join Us</Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -42,36 +45,38 @@ export function Navigation() {
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-3">
             <a
-              href="#about"
+              href="/#about"
               className="block text-sm font-medium hover:text-primary transition-colors py-2"
               onClick={() => setIsMenuOpen(false)}
             >
               About
             </a>
             <a
-              href="#events"
+              href="/#events"
               className="block text-sm font-medium hover:text-primary transition-colors py-2"
               onClick={() => setIsMenuOpen(false)}
             >
               Events
             </a>
             <a
-              href="#mission"
+              href="/#mission"
               className="block text-sm font-medium hover:text-primary transition-colors py-2"
               onClick={() => setIsMenuOpen(false)}
             >
               Mission
             </a>
             <a
-              href="#team"
+              href="/#team"
               className="block text-sm font-medium hover:text-primary transition-colors py-2"
               onClick={() => setIsMenuOpen(false)}
             >
               Team
             </a>
-            <Button size="sm" className="w-full">
-              Join Us
-            </Button>
+            <Link href="/contact">
+              <Button size="sm" className="w-full">
+                Join Us
+              </Button>
+            </Link>
           </div>
         )}
       </div>
