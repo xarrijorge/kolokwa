@@ -17,6 +17,7 @@ import {
   TrendingUp,
 } from "lucide-react"
 import Link from "next/link"
+import FloatingPatterns from '@/components/floatingIcons'
 import Image from "next/image"
 import { useEffect, useState } from "react"
 
@@ -132,8 +133,72 @@ export default function DevFestPage() {
         </div>
       </section>
 
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
-        <div className="container mx-auto max-w-6xl">
+      {/* ABOUT - Updated with new background */}
+      <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10"></div>
+        <div className="absolute inset-0 bg-[url('/images/pattern-5.png')] opacity-[0.02] bg-repeat"></div>
+
+        <div className="absolute inset-0 z-0">
+          <FloatingPatterns scrollY={scrollY} />
+        </div>
+
+        <div className="container mx-auto max-w-5xl relative z-10 text-center">
+          {/* FLOATING LOGO ROW */}
+          <div className="flex justify-center gap-6 mb-10">
+            {[
+              "pattern-1.png",
+              "pattern-2.png",
+              "pattern-3.png",
+              "pattern-4.png",
+              "pattern-5.png",
+            ].map((icon, i) => (
+              <div
+                key={i}
+                className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 backdrop-blur border border-border flex items-center justify-center
+          ${i % 2 === 0 ? "animate-float" : "animate-float-delayed"}`}
+              >
+                <Image
+                  src={`/images/${icon}`}
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="opacity-85"
+                />
+              </div>
+            ))}
+          </div>
+
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8">
+            About KoloKwa DevFest
+          </h2>
+
+          <div className="space-y-6 text-lg md:text-xl leading-relaxed text-foreground/90">
+            <p>
+              KoloKwa DevFest is an annual celebration of Liberia&apos;s
+              builders—developers, innovators, and entrepreneurs shaping the
+              country&apos;s digital future.
+            </p>
+            <p>
+              Designed to spotlight local talent and elevate voices that often go
+              unheard, the festival brings together creators, startups,
+              corporates, and government for days of learning, collaboration,
+              and bold innovation.
+            </p>
+            <p>
+              Our goal is simple: unite the ecosystem, empower locally built
+              solutions, and ensure Liberians lead the next chapter of
+              technology and entrepreneurship.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 relative">
+        <div className="absolute inset-0 z-0">
+          <FloatingPatterns scrollY={scrollY} />
+        </div>
+
+        <div className="container mx-auto max-w-6xl relative z-10">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center group hover:scale-105 transition-transform duration-300">
               <div className="text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-primary to-primary/60 mb-2">
@@ -163,8 +228,12 @@ export default function DevFestPage() {
         </div>
       </section>
 
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto max-w-6xl">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
+        <div className="absolute inset-0 z-0">
+          <FloatingPatterns scrollY={scrollY} />
+        </div>
+
+        <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">Our Purpose</h2>
             <p className="text-xl text-muted-foreground">Building Liberia's tech ecosystem, one connection at a time</p>
@@ -199,8 +268,12 @@ export default function DevFestPage() {
         </div>
       </section>
 
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
-        <div className="container mx-auto max-w-6xl">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30 relative">
+        <div className="absolute inset-0 z-0">
+          <FloatingPatterns scrollY={scrollY} />
+        </div>
+
+        <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">What to Expect</h2>
             <p className="text-xl text-muted-foreground">Three days packed with learning, networking, and innovation</p>
@@ -274,8 +347,12 @@ export default function DevFestPage() {
         </div>
       </section>
 
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto max-w-6xl">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
+        <div className="absolute inset-0 z-0">
+          <FloatingPatterns scrollY={scrollY} />
+        </div>
+
+        <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">Our Core Values</h2>
             <p className="text-xl text-muted-foreground">The principles that guide everything we do</p>
@@ -365,20 +442,6 @@ export default function DevFestPage() {
                 </div>
               </div>
             </div>
-
-            {/* <div className="group relative p-6 rounded-xl bg-gradient-to-br from-primary via-secondary to-accent hover:shadow-2xl transition-all duration-300 border border-border sm:col-span-2 lg:col-span-3">
-              <div className="flex items-start gap-4 justify-center">
-                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-white/20 backdrop-blur flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <TrendingUp className="h-6 w-6 text-white" />
-                </div>
-                <div className="max-w-2xl">
-                  <h3 className="text-xl font-bold mb-2 text-white">Progress</h3>
-                  <p className="text-white/90 text-sm leading-relaxed">
-                    Believing in continuous learning, experimentation, and the unstoppable drive to move forward
-                  </p>
-                </div>
-              </div>
-            </div> */}
           </div>
         </div>
       </section>
@@ -415,7 +478,6 @@ export default function DevFestPage() {
           </div>
         </div>
       </section>
-
       <Footer />
     </main>
   )
