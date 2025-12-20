@@ -11,6 +11,10 @@ import {
   Settings,
   LogOut,
   FilePlus,
+  Menu,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 /**
@@ -39,23 +43,26 @@ function NavItem({
   label,
   Icon,
   active,
+  collapsed,
 }: {
   href: string;
   label: string;
   Icon: React.ComponentType<any>;
   active?: boolean;
+  collapsed?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm ${
+      className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all text-sm ${
         active
-          ? "bg-accent/10 text-accent font-medium"
-          : "hover:bg-muted/60 text-muted-foreground"
-      }`}
+          ? "bg-primary text-primary-foreground font-medium shadow-sm"
+          : "hover:bg-accent/50 text-foreground hover:text-accent-foreground"
+      } ${collapsed ? "justify-center" : ""}`}
+      title={collapsed ? label : undefined}
     >
-      <Icon className="size-4" />
-      <span>{label}</span>
+      <Icon className="size-5 shrink-0" />
+      {!collapsed && <span>{label}</span>}
     </Link>
   );
 }
@@ -71,6 +78,7 @@ export default function AdminLayout({
   const [loadingUser, setLoadingUser] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -141,29 +149,21 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-muted/30 text-foreground">
       {/* Top bar for small screens */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-muted/10 md:hidden">
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b shadow-sm md:hidden">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen((s) => !s)}
               aria-label="Toggle menu"
-              className="p-2 rounded-md hover:bg-muted/10"
+              className="p-2 rounded-md hover:bg-accent/50 transition-colors"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
+              {mobileOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
             <Link href="/admin" className="text-lg font-bold">
               KoloKwa Admin
@@ -184,114 +184,163 @@ export default function AdminLayout({
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6">
-        <div className="md:flex md:gap-6">
-          {/* Sidebar */}
-          <aside
-            className={`hidden md:block w-64 shrink-0 py-8 border-r border-muted/10`}
-            aria-label="Admin sidebar"
-          >
-            <div className="px-4">
-              <Link href="/admin" className="flex items-center gap-3 mb-6">
-                <div className="rounded-sm p-2 bg-accent/10">
-                  <Home className="size-5 text-accent" />
+      <div className="flex">
+        {/* Sidebar */}
+        <aside
+          className={`hidden md:flex flex-col h-screen sticky top-0 bg-card border-r shadow-sm transition-all duration-300 ${
+            sidebarCollapsed ? "w-20" : "w-64"
+          }`}
+          aria-label="Admin sidebar"
+        >
+          <div className="flex-1 overflow-y-auto py-6 px-3">
+            {/* Logo/Brand */}
+            <div className={`mb-6 ${sidebarCollapsed ? "px-1" : "px-2"}`}>
+              <Link
+                href="/admin"
+                className={`flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : ""}`}
+              >
+                <div className="rounded-lg p-2 bg-primary/10">
+                  <Home className="size-5 text-primary" />
                 </div>
-                <div>
-                  <div className="text-lg font-bold">KoloKwa Admin</div>
-                  <div className="text-xs text-muted-foreground">
-                    Manage site
-                  </div>
-                </div>
-              </Link>
-
-              <nav className="flex flex-col gap-2 mt-4">
-                {nav.map((n) => (
-                  <NavItem
-                    key={n.href}
-                    href={n.href}
-                    label={n.label}
-                    Icon={n.Icon}
-                    active={
-                      pathname === n.href || pathname?.startsWith(n.href + "/")
-                    }
-                  />
-                ))}
-              </nav>
-
-              <div className="mt-8 border-t border-muted/10 pt-4">
-                {loadingUser ? (
-                  <div className="text-sm text-muted-foreground">
-                    Checking auth…
-                  </div>
-                ) : user ? (
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium">{user.email}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {user.role}
-                      </div>
+                {!sidebarCollapsed && (
+                  <div>
+                    <div className="text-lg font-bold">KoloKwa</div>
+                    <div className="text-xs text-muted-foreground">
+                      Admin Panel
                     </div>
-                    <button
-                      onClick={handleLogout}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted/10 text-sm"
-                    >
-                      <LogOut className="size-4" />
-                      Logout
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Link
-                      href="/login"
-                      className="text-sm px-3 py-2 rounded-md hover:bg-muted/10"
-                    >
-                      Sign in
-                    </Link>
                   </div>
                 )}
-              </div>
+              </Link>
             </div>
-          </aside>
 
-          {/* Mobile drawer */}
-          {mobileOpen && (
-            <div className="md:hidden absolute inset-x-0 top-16 bg-background z-50 border-b border-muted/10">
-              <div className="px-4 py-4">
-                <nav className="flex flex-col gap-2">
+            {/* Navigation */}
+            <nav className="flex flex-col gap-1">
+              {nav.map((n) => (
+                <NavItem
+                  key={n.href}
+                  href={n.href}
+                  label={n.label}
+                  Icon={n.Icon}
+                  active={
+                    pathname === n.href || pathname?.startsWith(n.href + "/")
+                  }
+                  collapsed={sidebarCollapsed}
+                />
+              ))}
+            </nav>
+          </div>
+
+          {/* User info and logout */}
+          <div className="border-t p-3">
+            {loadingUser ? (
+              <div
+                className={`text-sm text-muted-foreground ${sidebarCollapsed ? "text-center" : ""}`}
+              >
+                {sidebarCollapsed ? "..." : "Loading..."}
+              </div>
+            ) : user ? (
+              <div
+                className={`flex ${sidebarCollapsed ? "flex-col items-center gap-2" : "items-center justify-between"}`}
+              >
+                {!sidebarCollapsed && (
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">
+                      {user.email}
+                    </div>
+                    <div className="text-xs text-muted-foreground capitalize">
+                      {user.role}
+                    </div>
+                  </div>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent/50 text-sm transition-colors ${sidebarCollapsed ? "" : ""}`}
+                  title={sidebarCollapsed ? "Logout" : undefined}
+                >
+                  <LogOut className="size-4" />
+                  {!sidebarCollapsed && <span>Logout</span>}
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center justify-center px-3 py-2 rounded-md hover:bg-accent/50 text-sm"
+              >
+                Sign in
+              </Link>
+            )}
+          </div>
+
+          {/* Toggle button */}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="absolute -right-3 top-8 bg-card border shadow-md rounded-full p-1.5 hover:bg-accent/50 transition-colors z-50"
+            aria-label={
+              sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
+            }
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight className="size-4" />
+            ) : (
+              <ChevronLeft className="size-4" />
+            )}
+          </button>
+        </aside>
+
+        {/* Mobile drawer */}
+        {mobileOpen && (
+          <div
+            className="md:hidden fixed inset-0 top-[61px] bg-black/50 z-50"
+            onClick={() => setMobileOpen(false)}
+          >
+            <div
+              className="bg-card h-full w-64 shadow-xl overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-4 py-6">
+                <nav className="flex flex-col gap-1">
                   {nav.map((n) => (
                     <Link
                       key={n.href}
                       href={n.href}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-md ${
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
                         pathname === n.href
-                          ? "bg-accent/10 text-accent"
-                          : "hover:bg-muted/10"
+                          ? "bg-primary text-primary-foreground font-medium"
+                          : "hover:bg-accent/50"
                       }`}
                     >
-                      <n.Icon className="size-4" />
+                      <n.Icon className="size-5" />
                       <span>{n.label}</span>
                     </Link>
                   ))}
                 </nav>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Main content */}
-          <main className="flex-1 min-w-0 py-8">
-            <div className="mb-6 flex items-center justify-between">
+        {/* Main content */}
+        <main className="flex-1 min-w-0 overflow-x-hidden">
+          <div className="p-6 md:p-8">
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-semibold">
+                <h1 className="text-3xl font-bold tracking-tight">
                   {pathname === "/admin"
                     ? "Dashboard"
                     : pathname
                         ?.split("/")
                         .slice(2)
                         .join(" ")
-                        .replace(/-/g, " ") || "Admin"}
+                        .replace(/-/g, " ")
+                        .split(" ")
+                        .map(
+                          (word) =>
+                            word.charAt(0).toUpperCase() + word.slice(1),
+                        )
+                        .join(" ") || "Admin"}
                 </h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mt-1">
                   Manage the site content and users
                 </p>
               </div>
@@ -299,26 +348,26 @@ export default function AdminLayout({
               <div className="flex items-center gap-3">
                 <Link
                   href="/admin/partners"
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted/10"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors text-sm font-medium"
                 >
                   <FilePlus className="size-4" />
-                  New Partner
+                  <span className="hidden sm:inline">New Partner</span>
                 </Link>
                 <button
-                  onClick={() => {
-                    // quick sign out
-                    handleLogout();
-                  }}
-                  className="px-3 py-2 rounded-md hover:bg-muted/10"
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border hover:bg-accent/50 transition-colors text-sm font-medium md:hidden"
                 >
+                  <LogOut className="size-4" />
                   Sign out
                 </button>
               </div>
             </div>
 
-            <div className="bg-card rounded-md shadow-sm p-6">{children}</div>
-          </main>
-        </div>
+            <div className="bg-card rounded-lg shadow-sm border p-6">
+              {children}
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );

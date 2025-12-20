@@ -20,6 +20,7 @@
 
 import { createClient } from "@libsql/client";
 import { randomUUID } from "crypto";
+import bcrypt from "bcrypt";
 
 type DbEvent = {
   id: string;
@@ -38,9 +39,9 @@ function getClient() {
   if (client) return client;
 
   const url = process.env.TURSO_DB_URL;
-  const token = process.env.TURSO_DB_TOKEN;
+  const authToken = process.env.TURSO_DB_TOKEN;
 
-  if (!url || !token) {
+  if (!url || !authToken) {
     throw new Error(
       "Turso DB environment variables not set. Please provide TURSO_DB_URL and TURSO_DB_TOKEN.",
     );
@@ -48,9 +49,7 @@ function getClient() {
 
   client = createClient({
     url,
-    auth: {
-      token,
-    },
+    authToken,
   });
 
   return client;
@@ -276,6 +275,12 @@ export async function ensureStaffTable() {
     );
   `;
   await c.execute(sql);
+
+  // Create index on email for faster lookups (if not exists)
+  const indexSql = `
+    CREATE INDEX IF NOT EXISTS idx_staff_users_email ON staff_users(email);
+  `;
+  await c.execute(indexSql);
 }
 
 /**
@@ -291,8 +296,18 @@ export async function getStaffByEmail(email: string) {
 }
 
 /**
+ * Verify a password against a hashed password
+ */
+export async function verifyPassword(
+  plainPassword: string,
+  hashedPassword: string,
+): Promise<boolean> {
+  return bcrypt.compare(plainPassword, hashedPassword);
+}
+
+/**
  * Create a new staff user (returns created user)
- * IMPORTANT: In production, hash the password before calling this.
+ * Automatically hashes the password using bcrypt before storing.
  */
 export async function createStaff(input: {
   email: string;
@@ -303,6 +318,10 @@ export async function createStaff(input: {
   const c = getClient();
   const id = randomUUID();
   const created_at = new Date().toISOString();
+
+  // Hash the password with bcrypt (salt rounds: 10)
+  const hashedPassword = await bcrypt.hash(input.password, 10);
+
   const sql = `
     INSERT INTO staff_users (id, email, password, role, created_at)
     VALUES (?, ?, ?, ?, ?)
@@ -310,7 +329,7 @@ export async function createStaff(input: {
   await c.execute(sql, [
     id,
     input.email,
-    input.password,
+    hashedPassword,
     input.role ?? "staff",
     created_at,
   ]);
@@ -347,6 +366,35 @@ export async function deleteStaff(id: string) {
     [id],
   );
   return (check.rows ?? []).length === 0;
+}
+
+/**
+ * Seed super admin user for production
+ * Creates a super admin with email: cnah27@gmail.com
+ * This should be called once on initial setup
+ */
+export async function seedSuperAdmin() {
+  await ensureStaffTable();
+
+  const superAdminEmail = "cnah27@gmail.com";
+  const superAdminPassword = "xmas@2025";
+
+  // Check if super admin already exists
+  const existing = await getStaffByEmail(superAdminEmail);
+  if (existing) {
+    console.log("Super admin already exists, skipping seed.");
+    return existing;
+  }
+
+  // Create super admin with hashed password
+  const superAdmin = await createStaff({
+    email: superAdminEmail,
+    password: superAdminPassword,
+    role: "admin",
+  });
+
+  console.log("Super admin created successfully:", superAdminEmail);
+  return superAdmin;
 }
 
 /**
