@@ -1,4 +1,5 @@
-import { Mail, MapPin } from "lucide-react"
+import Link from "next/link";
+import { Mail, MapPin } from "lucide-react";
 
 export function Footer() {
   return (
@@ -15,8 +16,14 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* Logo & Tagline */}
           <div className="md:col-span-2">
-            <img src="/images/kolokwa.png" alt="Kolokwa" className="h-10 w-auto mb-4" />
-            <p className="text-sm text-muted-foreground mb-2 font-medium">Where Innovation Meets Community</p>
+            <img
+              src="/images/kolokwa.png"
+              alt="Kolokwa"
+              className="h-10 w-auto mb-4"
+            />
+            <p className="text-sm text-muted-foreground mb-2 font-medium">
+              Where Innovation Meets Community
+            </p>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Building Liberia's tech ecosystem, one connection at a time.
             </p>
@@ -27,24 +34,36 @@ export function Footer() {
             <h4 className="font-bold mb-4">Quick Links</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#about" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  href="/about"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#events" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  href="/#events"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Events
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#mission" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  href="/about"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Mission & Values
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#team" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  href="/team"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Our Team
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -73,10 +92,11 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-border text-center">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Kolokwa TechGuild. All rights reserved.
+            © {new Date().getFullYear()} Kolokwa TechGuild. All rights
+            reserved.
           </p>
         </div>
       </div>
     </footer>
-  )
+  );
 }

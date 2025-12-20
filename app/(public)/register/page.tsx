@@ -1,16 +1,21 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
+import type { Metadata } from "next";
 
-import { Navigation } from "@/components/navigation"
-import { Footer } from "@/components/footer"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+
+export const metadata: Metadata = {
+  title: "Register for Code & Cocktails - Kolokwa TechGuild",
+  description:
+    "Register for our launch event, Code & Cocktails. Join the movement to build Liberia's tech ecosystem.",
+};
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -20,25 +25,25 @@ export default function RegisterPage() {
     company: "",
     role: "",
     interests: "",
-  })
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // Form submission logic here
-    console.log("[v0] Form submitted:", formData)
-  }
+    console.log("[v0] Form submitted:", formData);
+  };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    })
-  }
+    });
+  };
 
   return (
     <main className="min-h-screen">
-      <Navigation />
-
       <section className="pt-32 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-2xl">
           <Link href="/">
@@ -48,11 +53,15 @@ export default function RegisterPage() {
             </Button>
           </Link>
 
-          <div className="text-secondary font-bold text-sm mb-4 uppercase tracking-wide">Starting Soon</div>
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">Join Code & Cocktails</h1>
+          <div className="text-secondary font-bold text-sm mb-4 uppercase tracking-wide">
+            Starting Soon
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
+            Join Code & Cocktails
+          </h1>
           <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-            Sign up for our launch event—an intimate tech mixer celebrating local innovation and building Liberia's tech
-            community.
+            Sign up for our launch event—an intimate tech mixer celebrating
+            local innovation and building Liberia's tech community.
           </p>
 
           {/* Event Details */}
@@ -78,15 +87,21 @@ export default function RegisterPage() {
                 </li>
                 <li className="flex items-start">
                   <span className="text-secondary mr-2">•</span>
-                  <span>"Built in Liberia" tech showcase featuring local innovations</span>
+                  <span>
+                    "Built in Liberia" tech showcase featuring local innovations
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-secondary mr-2">•</span>
-                  <span>Networking with developers, founders, and innovators</span>
+                  <span>
+                    Networking with developers, founders, and innovators
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-secondary mr-2">•</span>
-                  <span>Community directory sign-up to connect with attendees</span>
+                  <span>
+                    Community directory sign-up to connect with attendees
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-secondary mr-2">•</span>
@@ -184,12 +199,11 @@ export default function RegisterPage() {
           </form>
 
           <p className="text-sm text-muted-foreground mt-6 text-center">
-            By registering, you'll receive updates about the event and be included in the community directory.
+            By registering, you'll receive updates about the event and be
+            included in the community directory.
           </p>
         </div>
       </section>
-
-      <Footer />
     </main>
-  )
+  );
 }

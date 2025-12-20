@@ -1,8 +1,7 @@
-"use client"
+"use client";
 
-import { Navigation } from "@/components/navigation"
-import { Footer } from "@/components/footer"
-import { Button } from "@/components/ui/button"
+import type { Metadata } from "next";
+import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   Calendar,
@@ -15,56 +14,90 @@ import {
   Code,
   Rocket,
   TrendingUp,
-} from "lucide-react"
-import Link from "next/link"
-import FloatingPatterns from '@/components/floatingIcons'
-import Image from "next/image"
-import { useEffect, useState } from "react"
+} from "lucide-react";
+import Link from "next/link";
+import FloatingPatterns from "@/components/floatingIcons";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+
+export const metadata: Metadata = {
+  title: "KoloKwa DevFest - Liberia's Premier Tech Festival",
+  description:
+    "Join KoloKwa DevFest, Liberia's premier tech & innovation festival. Celebrate local talent, learn from experts, and build the future.",
+};
 
 export default function DevFestPage() {
-  const [scrollY, setScrollY] = useState(0)
+  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY)
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <main className="min-h-screen overflow-hidden">
-      <Navigation />
-
       <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div
             className="absolute top-[10%] left-[5%] animate-float"
             style={{ transform: `translateY(${scrollY * 0.2}px)` }}
           >
-            <Image src="/images/pattern-1.png" alt="" width={100} height={100} className="drop-shadow-lg" />
+            <Image
+              src="/images/pattern-1.png"
+              alt=""
+              width={100}
+              height={100}
+              className="drop-shadow-lg"
+            />
           </div>
           <div
             className="absolute top-[20%] right-[10%] animate-float-delayed"
             style={{ transform: `translateY(${scrollY * 0.15}px)` }}
           >
-            <Image src="/images/pattern-2.png" alt="" width={120} height={120} className="drop-shadow-lg" />
+            <Image
+              src="/images/pattern-2.png"
+              alt=""
+              width={120}
+              height={120}
+              className="drop-shadow-lg"
+            />
           </div>
           <div
             className="absolute top-[60%] left-[15%] animate-float"
             style={{ transform: `translateY(${scrollY * 0.25}px)` }}
           >
-            <Image src="/images/pattern-3.png" alt="" width={110} height={110} className="drop-shadow-lg" />
+            <Image
+              src="/images/pattern-3.png"
+              alt=""
+              width={110}
+              height={110}
+              className="drop-shadow-lg"
+            />
           </div>
           <div
             className="absolute top-[40%] right-[20%] animate-pulse-slow"
             style={{ transform: `translateY(${scrollY * 0.18}px)` }}
           >
-            <Image src="/images/pattern-4.png" alt="" width={90} height={90} className="drop-shadow-lg" />
+            <Image
+              src="/images/pattern-4.png"
+              alt=""
+              width={90}
+              height={90}
+              className="drop-shadow-lg"
+            />
           </div>
           <div
             className="absolute bottom-[20%] right-[8%] animate-float-delayed"
             style={{ transform: `translateY(${scrollY * 0.22}px)` }}
           >
-            <Image src="/images/pattern-5.png" alt="" width={105} height={105} className="drop-shadow-lg" />
+            <Image
+              src="/images/pattern-5.png"
+              alt=""
+              width={105}
+              height={105}
+              className="drop-shadow-lg"
+            />
           </div>
 
           {/* Second set of patterns */}
@@ -72,37 +105,70 @@ export default function DevFestPage() {
             className="absolute top-[30%] left-[25%] animate-pulse-slow"
             style={{ transform: `translateY(${scrollY * 0.17}px)` }}
           >
-            <Image src="/images/pattern-1.png" alt="" width={85} height={85} className="drop-shadow-lg" />
+            <Image
+              src="/images/pattern-1.png"
+              alt=""
+              width={85}
+              height={85}
+              className="drop-shadow-lg"
+            />
           </div>
           <div
             className="absolute bottom-[35%] right-[30%] animate-float"
             style={{ transform: `translateY(${scrollY * 0.21}px)` }}
           >
-            <Image src="/images/pattern-2.png" alt="" width={95} height={95} className="drop-shadow-lg" />
+            <Image
+              src="/images/pattern-2.png"
+              alt=""
+              width={95}
+              height={95}
+              className="drop-shadow-lg"
+            />
           </div>
           <div
             className="absolute top-[15%] right-[35%] animate-float-delayed"
             style={{ transform: `translateY(${scrollY * 0.19}px)` }}
           >
-            <Image src="/images/pattern-3.png" alt="" width={88} height={88} className="drop-shadow-lg" />
+            <Image
+              src="/images/pattern-3.png"
+              alt=""
+              width={88}
+              height={88}
+              className="drop-shadow-lg"
+            />
           </div>
           <div
             className="absolute bottom-[25%] left-[30%] animate-float"
             style={{ transform: `translateY(${scrollY * 0.23}px)` }}
           >
-            <Image src="/images/pattern-4.png" alt="" width={100} height={100} className="drop-shadow-lg" />
+            <Image
+              src="/images/pattern-4.png"
+              alt=""
+              width={100}
+              height={100}
+              className="drop-shadow-lg"
+            />
           </div>
           <div
             className="absolute top-[50%] left-[8%] animate-pulse-slow"
             style={{ transform: `translateY(${scrollY * 0.16}px)` }}
           >
-            <Image src="/images/pattern-5.png" alt="" width={92} height={92} className="drop-shadow-lg" />
+            <Image
+              src="/images/pattern-5.png"
+              alt=""
+              width={92}
+              height={92}
+              className="drop-shadow-lg"
+            />
           </div>
         </div>
 
         <div className="container mx-auto max-w-6xl relative z-10">
           <Link href="/">
-            <Button variant="ghost" className="mb-8 group absolute top-4 left-4">
+            <Button
+              variant="ghost"
+              className="mb-8 group absolute top-4 left-4"
+            >
               <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
               Back to Home
             </Button>
@@ -126,8 +192,9 @@ export default function DevFestPage() {
             </p>
 
             <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl mx-auto animate-fade-in-up animation-delay-600">
-              Where developers, innovators, and entrepreneurs come together to celebrate local talent, share knowledge,
-              and build the digital future of Liberia
+              Where developers, innovators, and entrepreneurs come together to
+              celebrate local talent, share knowledge, and build the digital
+              future of Liberia
             </p>
           </div>
         </div>
@@ -179,8 +246,8 @@ export default function DevFestPage() {
               country&apos;s digital future.
             </p>
             <p>
-              Designed to spotlight local talent and elevate voices that often go
-              unheard, the festival brings together creators, startups,
+              Designed to spotlight local talent and elevate voices that often
+              go unheard, the festival brings together creators, startups,
               corporates, and government for days of learning, collaboration,
               and bold innovation.
             </p>
@@ -204,25 +271,33 @@ export default function DevFestPage() {
               <div className="text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-primary to-primary/60 mb-2">
                 3
               </div>
-              <div className="text-muted-foreground font-medium">Days of Innovation</div>
+              <div className="text-muted-foreground font-medium">
+                Days of Innovation
+              </div>
             </div>
             <div className="text-center group hover:scale-105 transition-transform duration-300">
               <div className="text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-secondary to-secondary/60 mb-2">
                 500+
               </div>
-              <div className="text-muted-foreground font-medium">Expected Attendees</div>
+              <div className="text-muted-foreground font-medium">
+                Expected Attendees
+              </div>
             </div>
             <div className="text-center group hover:scale-105 transition-transform duration-300">
               <div className="text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-accent to-accent/60 mb-2">
                 50+
               </div>
-              <div className="text-muted-foreground font-medium">Speakers & Mentors</div>
+              <div className="text-muted-foreground font-medium">
+                Speakers & Mentors
+              </div>
             </div>
             <div className="text-center group hover:scale-105 transition-transform duration-300">
               <div className="text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-primary via-secondary to-accent mb-2">
                 100+
               </div>
-              <div className="text-muted-foreground font-medium">Projects Showcased</div>
+              <div className="text-muted-foreground font-medium">
+                Projects Showcased
+              </div>
             </div>
           </div>
         </div>
@@ -236,7 +311,9 @@ export default function DevFestPage() {
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">Our Purpose</h2>
-            <p className="text-xl text-muted-foreground">Building Liberia's tech ecosystem, one connection at a time</p>
+            <p className="text-xl text-muted-foreground">
+              Building Liberia's tech ecosystem, one connection at a time
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
@@ -247,9 +324,11 @@ export default function DevFestPage() {
               </div>
               <h3 className="text-3xl font-bold mb-4">Our Mission</h3>
               <p className="text-muted-foreground leading-relaxed text-lg">
-                To spotlight and celebrate Liberia's developers, innovators, and entrepreneurs—champions building impact
-                who need platforms to be seen and heard. We break limiting structures, foster collaboration across tech
-                builders, startups, corporates, and government, empowering locally sourced solutions.
+                To spotlight and celebrate Liberia's developers, innovators, and
+                entrepreneurs—champions building impact who need platforms to be
+                seen and heard. We break limiting structures, foster
+                collaboration across tech builders, startups, corporates, and
+                government, empowering locally sourced solutions.
               </p>
             </div>
 
@@ -260,8 +339,10 @@ export default function DevFestPage() {
               </div>
               <h3 className="text-3xl font-bold mb-4">Our Vision</h3>
               <p className="text-muted-foreground leading-relaxed text-lg">
-                A vibrant, collaborative, and globally recognized Liberian tech ecosystem where developers, innovators,
-                and entrepreneurs thrive, influence change, and create solutions that redefine the nation's future.
+                A vibrant, collaborative, and globally recognized Liberian tech
+                ecosystem where developers, innovators, and entrepreneurs
+                thrive, influence change, and create solutions that redefine the
+                nation's future.
               </p>
             </div>
           </div>
@@ -275,8 +356,12 @@ export default function DevFestPage() {
 
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">What to Expect</h2>
-            <p className="text-xl text-muted-foreground">Three days packed with learning, networking, and innovation</p>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              What to Expect
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Three days packed with learning, networking, and innovation
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -286,8 +371,8 @@ export default function DevFestPage() {
               </div>
               <h3 className="text-2xl font-bold mb-3">Technical Talks</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Learn from industry experts about the latest technologies, frameworks, and best practices in software
-                development
+                Learn from industry experts about the latest technologies,
+                frameworks, and best practices in software development
               </p>
             </div>
 
@@ -297,7 +382,8 @@ export default function DevFestPage() {
               </div>
               <h3 className="text-2xl font-bold mb-3">Workshops</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Hands-on sessions covering web development, mobile apps, AI/ML, cloud computing, and more
+                Hands-on sessions covering web development, mobile apps, AI/ML,
+                cloud computing, and more
               </p>
             </div>
 
@@ -307,8 +393,8 @@ export default function DevFestPage() {
               </div>
               <h3 className="text-2xl font-bold mb-3">Startup Showcase</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Watch Liberian startups pitch their innovative solutions and compete for prizes and investment
-                opportunities
+                Watch Liberian startups pitch their innovative solutions and
+                compete for prizes and investment opportunities
               </p>
             </div>
 
@@ -318,8 +404,8 @@ export default function DevFestPage() {
               </div>
               <h3 className="text-2xl font-bold mb-3">Networking</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Connect with fellow developers, entrepreneurs, investors, and tech leaders shaping Liberia's digital
-                future
+                Connect with fellow developers, entrepreneurs, investors, and
+                tech leaders shaping Liberia's digital future
               </p>
             </div>
 
@@ -329,8 +415,8 @@ export default function DevFestPage() {
               </div>
               <h3 className="text-2xl font-bold mb-3">Built in Liberia</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Celebrate locally developed products and solutions that are making real impact in communities across
-                Liberia
+                Celebrate locally developed products and solutions that are
+                making real impact in communities across Liberia
               </p>
             </div>
 
@@ -340,7 +426,8 @@ export default function DevFestPage() {
               </div>
               <h3 className="text-2xl font-bold mb-3">Community Building</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Join a movement of passionate builders creating lasting connections and collaborative opportunities
+                Join a movement of passionate builders creating lasting
+                connections and collaborative opportunities
               </p>
             </div>
           </div>
@@ -354,8 +441,12 @@ export default function DevFestPage() {
 
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Our Core Values</h2>
-            <p className="text-xl text-muted-foreground">The principles that guide everything we do</p>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Our Core Values
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              The principles that guide everything we do
+            </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -367,7 +458,8 @@ export default function DevFestPage() {
                 <div>
                   <h3 className="text-xl font-bold mb-2">Empowerment</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Giving Liberian tech builders the visibility and support they need to lead
+                    Giving Liberian tech builders the visibility and support
+                    they need to lead
                   </p>
                 </div>
               </div>
@@ -381,7 +473,8 @@ export default function DevFestPage() {
                 <div>
                   <h3 className="text-xl font-bold mb-2">Collaboration</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Fostering partnerships across builders, startups, corporates, and government
+                    Fostering partnerships across builders, startups,
+                    corporates, and government
                   </p>
                 </div>
               </div>
@@ -437,7 +530,8 @@ export default function DevFestPage() {
                 <div>
                   <h3 className="text-xl font-bold mb-2">Inclusion</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Ensuring opportunities are accessible to all, regardless of background
+                    Ensuring opportunities are accessible to all, regardless of
+                    background
                   </p>
                 </div>
               </div>
@@ -456,11 +550,13 @@ export default function DevFestPage() {
             Start Your Journey
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-balance">Begin With Code & Cocktails</h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-balance">
+            Begin With Code & Cocktails
+          </h2>
 
           <p className="text-xl text-muted-foreground mb-10 text-pretty leading-relaxed max-w-2xl mx-auto">
-            Join our pilot event—an intimate tech mixer where the Kolokwa movement begins. Network, learn, and be part
-            of something bigger.
+            Join our pilot event—an intimate tech mixer where the Kolokwa
+            movement begins. Network, learn, and be part of something bigger.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -471,14 +567,17 @@ export default function DevFestPage() {
               </Button>
             </Link>
             <Link href="/">
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6 bg-transparent">
+              <Button
+                size="lg"
+                variant="outline"
+                className="text-lg px-8 py-6 bg-transparent"
+              >
                 Learn More
               </Button>
             </Link>
           </div>
         </div>
       </section>
-      <Footer />
     </main>
-  )
+  );
 }
