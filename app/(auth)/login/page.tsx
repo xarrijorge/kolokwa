@@ -1,48 +1,60 @@
-"use client"
+"use client";
 
-import React, { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
-export default function AdminLoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
     try {
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-      })
+      });
 
       if (!res.ok) {
-        const body = await res.json().catch(() => null)
-        throw new Error(body?.message || "Invalid credentials")
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message || "Invalid credentials");
       }
 
       // On success the server sets a cookie; redirect to admin dashboard
-      router.push("/admin")
+      router.push("/admin");
     } catch (err: any) {
-      setError(String(err?.message ?? err))
+      setError(String(err?.message ?? err));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   return (
     <main className="min-h-screen flex items-center justify-center py-24 px-4">
       <Card className="p-8 w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-2">Admin sign in</h1>
-        <p className="text-sm text-muted-foreground mb-6">Sign in with your staff credentials.</p>
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/images/kolokwa.png"
+            alt="Kolokwa Logo"
+            width={96}
+            height={96}
+            className="object-contain"
+          />
+        </div>
+        <h1 className="text-2xl font-bold mb-2">Sign in</h1>
+        <p className="text-sm text-muted-foreground mb-6">
+          Sign in with your staff credentials.
+        </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -78,17 +90,19 @@ export default function AdminLoginPage() {
               type="button"
               variant="outline"
               onClick={() => {
-                setEmail("admin@example.com")
-                setPassword("password")
+                setEmail("admin@example.com");
+                setPassword("password");
               }}
             >
               Use dev creds
             </Button>
           </div>
 
-          {error ? <div className="text-sm text-destructive">{error}</div> : null}
+          {error ? (
+            <div className="text-sm text-destructive">{error}</div>
+          ) : null}
         </form>
       </Card>
     </main>
-  )
+  );
 }

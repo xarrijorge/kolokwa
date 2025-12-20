@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   Calendar,
@@ -11,7 +11,7 @@ import {
   Settings,
   LogOut,
   FilePlus,
-} from "lucide-react"
+} from "lucide-react";
 
 /**
  * Admin layout with sidebar and top bar.
@@ -28,7 +28,11 @@ import {
  * to sign out.
  */
 
-type User = { id?: string | null; email?: string | null; role?: string | null } | null
+type User = {
+  id?: string | null;
+  email?: string | null;
+  role?: string | null;
+} | null;
 
 function NavItem({
   href,
@@ -36,60 +40,79 @@ function NavItem({
   Icon,
   active,
 }: {
-  href: string
-  label: string
-  Icon: React.ComponentType<any>
-  active?: boolean
+  href: string;
+  label: string;
+  Icon: React.ComponentType<any>;
+  active?: boolean;
 }) {
   return (
     <Link
       href={href}
       className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm ${
-        active ? "bg-accent/10 text-accent font-medium" : "hover:bg-muted/60 text-muted-foreground"
+        active
+          ? "bg-accent/10 text-accent font-medium"
+          : "hover:bg-muted/60 text-muted-foreground"
       }`}
     >
       <Icon className="size-4" />
       <span>{label}</span>
     </Link>
-  )
+  );
 }
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname() || "/admin"
-  const [user, setUser] = useState<User>(null)
-  const [loadingUser, setLoadingUser] = useState(true)
-  const [mobileOpen, setMobileOpen] = useState(false)
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname() || "/admin";
+  const router = useRouter();
+  const [user, setUser] = useState<User>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    let mounted = true
-    setLoadingUser(true)
+    let mounted = true;
+    setLoadingUser(true);
     fetch("/api/auth")
       .then((r) => r.json())
       .then((data) => {
-        if (!mounted) return
-        setUser(data?.user ?? null)
+        if (!mounted) return;
+        setUser(data?.user ?? null);
+        const allowedRoles = ["admin", "editor", "staff"];
+        const isAuthorized =
+          data?.user && data.user.role && allowedRoles.includes(data.user.role);
+        setAuthorized(isAuthorized);
+        if (!isAuthorized && pathname !== "/login") {
+          router.push("/login");
+        }
       })
       .catch(() => {
-        if (!mounted) return
-        setUser(null)
+        if (!mounted) return;
+        setUser(null);
+        setAuthorized(false);
+        if (pathname !== "/login") {
+          router.push("/login");
+        }
       })
       .finally(() => {
-        if (!mounted) return
-        setLoadingUser(false)
-      })
+        if (!mounted) return;
+        setLoadingUser(false);
+      });
     return () => {
-      mounted = false
-    }
-  }, [])
+      mounted = false;
+    };
+  }, [pathname, router]);
 
   async function handleLogout() {
     try {
-      await fetch("/api/auth", { method: "DELETE" })
+      await fetch("/api/auth", { method: "DELETE" });
       // reload to clear auth state and redirect to login or homepage
-      window.location.href = "/admin"
+      window.location.href = "/admin";
     } catch (err) {
       // best-effort: still reload
-      window.location.reload()
+      window.location.reload();
     }
   }
 
@@ -99,7 +122,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/partners", label: "Partners", Icon: Briefcase },
     { href: "/admin/staff", label: "Staff", Icon: Users },
     { href: "/admin/settings", label: "Settings", Icon: Settings },
-  ]
+  ];
+
+  if (loadingUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!authorized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        Unauthorized
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -112,8 +151,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               aria-label="Toggle menu"
               className="p-2 rounded-md hover:bg-muted/10"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             </button>
             <Link href="/admin" className="text-lg font-bold">
@@ -127,7 +176,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             ) : user ? (
               <div className="text-sm">{user.email ?? "Staff"}</div>
             ) : (
-              <Link href="/admin" className="text-sm text-muted-foreground">
+              <Link href="/login" className="text-sm text-muted-foreground">
                 Sign in
               </Link>
             )}
@@ -149,7 +198,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
                 <div>
                   <div className="text-lg font-bold">KoloKwa Admin</div>
-                  <div className="text-xs text-muted-foreground">Manage site</div>
+                  <div className="text-xs text-muted-foreground">
+                    Manage site
+                  </div>
                 </div>
               </Link>
 
@@ -160,19 +211,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     href={n.href}
                     label={n.label}
                     Icon={n.Icon}
-                    active={pathname === n.href || pathname?.startsWith(n.href + "/")}
+                    active={
+                      pathname === n.href || pathname?.startsWith(n.href + "/")
+                    }
                   />
                 ))}
               </nav>
 
               <div className="mt-8 border-t border-muted/10 pt-4">
                 {loadingUser ? (
-                  <div className="text-sm text-muted-foreground">Checking auth…</div>
+                  <div className="text-sm text-muted-foreground">
+                    Checking auth…
+                  </div>
                 ) : user ? (
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-medium">{user.email}</div>
-                      <div className="text-xs text-muted-foreground">{user.role}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {user.role}
+                      </div>
                     </div>
                     <button
                       onClick={handleLogout}
@@ -184,7 +241,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   </div>
                 ) : (
                   <div className="flex gap-2">
-                    <Link href="/admin" className="text-sm px-3 py-2 rounded-md hover:bg-muted/10">
+                    <Link
+                      href="/login"
+                      className="text-sm px-3 py-2 rounded-md hover:bg-muted/10"
+                    >
                       Sign in
                     </Link>
                   </div>
@@ -204,7 +264,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       href={n.href}
                       onClick={() => setMobileOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2 rounded-md ${
-                        pathname === n.href ? "bg-accent/10 text-accent" : "hover:bg-muted/10"
+                        pathname === n.href
+                          ? "bg-accent/10 text-accent"
+                          : "hover:bg-muted/10"
                       }`}
                     >
                       <n.Icon className="size-4" />
@@ -223,20 +285,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <h1 className="text-2xl font-semibold">
                   {pathname === "/admin"
                     ? "Dashboard"
-                    : pathname?.split("/").slice(2).join(" ").replace(/-/g, " ") || "Admin"}
+                    : pathname
+                        ?.split("/")
+                        .slice(2)
+                        .join(" ")
+                        .replace(/-/g, " ") || "Admin"}
                 </h1>
-                <p className="text-sm text-muted-foreground">Manage the site content and users</p>
+                <p className="text-sm text-muted-foreground">
+                  Manage the site content and users
+                </p>
               </div>
 
               <div className="flex items-center gap-3">
-                <Link href="/admin/partners" className="inline-flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted/10">
+                <Link
+                  href="/admin/partners"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted/10"
+                >
                   <FilePlus className="size-4" />
                   New Partner
                 </Link>
                 <button
                   onClick={() => {
                     // quick sign out
-                    handleLogout()
+                    handleLogout();
                   }}
                   className="px-3 py-2 rounded-md hover:bg-muted/10"
                 >
@@ -250,5 +321,5 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </div>
     </div>
-  )
+  );
 }
