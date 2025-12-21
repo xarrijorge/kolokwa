@@ -8,7 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Loader2, Calendar, Users } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeft, Loader2, Calendar, Users, Plus, X } from "lucide-react";
 
 type EventItem = {
   id: string;
@@ -17,7 +24,25 @@ type EventItem = {
   date?: string | null;
   image?: string | null;
   tag?: string | null;
+  numParticipants?: number | null;
+  venue?: string | null;
+  eventType?: string | null;
+  cost?: number | null;
+  speakers?: any[] | null;
+  sponsors?: any[] | null;
   created_at?: string | null;
+};
+
+type Speaker = {
+  image: string;
+  name: string;
+  position: string;
+  bio: string;
+};
+
+type Sponsor = {
+  name: string;
+  type: string;
 };
 
 export default function EventDetailPage() {
@@ -37,6 +62,21 @@ export default function EventDetailPage() {
   const [date, setDate] = useState("");
   const [image, setImage] = useState("");
   const [tag, setTag] = useState("");
+  const [numParticipants, setNumParticipants] = useState("");
+  const [venue, setVenue] = useState("");
+  const [eventType, setEventType] = useState("Free");
+  const [cost, setCost] = useState("");
+  const [speakers, setSpeakers] = useState<Speaker[]>([]);
+  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+
+  // Temp state for adding speakers/sponsors
+  const [newSpeaker, setNewSpeaker] = useState<Speaker>({
+    image: "",
+    name: "",
+    position: "",
+    bio: "",
+  });
+  const [newSponsor, setNewSponsor] = useState<Sponsor>({ name: "", type: "" });
 
   useEffect(() => {
     async function loadEvent() {
@@ -54,6 +94,26 @@ export default function EventDetailPage() {
         setDate(data.date ? data.date.slice(0, 16) : "");
         setImage(data.image ?? "");
         setTag(data.tag ?? "");
+        setNumParticipants(data.numParticipants?.toString() ?? "");
+        setVenue(data.venue ?? "");
+        setEventType(data.eventType ?? "Free");
+        setCost(data.cost?.toString() ?? "");
+        setSpeakers(
+          data.speakers
+            ? Array.isArray(data.speakers)
+              ? data.speakers
+              : JSON.parse(data.speakers)
+            : [],
+        );
+        setSponsors(
+          data.sponsors
+            ? Array.isArray(data.sponsors)
+              ? data.sponsors
+              : JSON.parse(data.sponsors)
+            : [],
+        );
+        setNewSpeaker({ image: "", name: "", position: "", bio: "" });
+        setNewSponsor({ name: "", type: "" });
       } catch (err: any) {
         setError(String(err?.message ?? err));
       } finally {
@@ -82,6 +142,17 @@ export default function EventDetailPage() {
       date: date || undefined,
       image: image || undefined,
       tag: tag || undefined,
+      numParticipants: numParticipants ? parseInt(numParticipants) : undefined,
+      venue: venue.trim() || undefined,
+      eventType,
+      cost:
+        eventType === "Paid"
+          ? cost
+            ? parseFloat(cost)
+            : undefined
+          : undefined,
+      speakers: speakers.length > 0 ? speakers : undefined,
+      sponsors: sponsors.length > 0 ? sponsors : undefined,
     };
 
     try {
@@ -212,6 +283,42 @@ export default function EventDetailPage() {
                 </p>
               </div>
               <div>
+                <p className="text-sm text-muted-foreground">Participants</p>
+                <p className="font-medium">
+                  {event.numParticipants
+                    ? `${event.numParticipants} expected`
+                    : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Venue</p>
+                <p className="font-medium">{event.venue || "—"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Type</p>
+                <p className="font-medium">
+                  {event.eventType ? (
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-medium ${
+                        event.eventType === "Free"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-blue-100 text-blue-800"
+                      }`}
+                    >
+                      {event.eventType}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+              {event.eventType === "Paid" && event.cost && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Cost</p>
+                  <p className="font-medium">${event.cost}</p>
+                </div>
+              )}
+              <div>
                 <p className="text-sm text-muted-foreground">Created</p>
                 <p className="font-medium">
                   {event.created_at
@@ -278,6 +385,59 @@ export default function EventDetailPage() {
                   />
                 </div>
 
+                <div>
+                  <Label htmlFor="numParticipants">
+                    Number of Participants
+                  </Label>
+                  <Input
+                    id="numParticipants"
+                    type="number"
+                    value={numParticipants}
+                    onChange={(e) => setNumParticipants(e.target.value)}
+                    placeholder="Expected participants"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="venue">Venue</Label>
+                  <Input
+                    id="venue"
+                    value={venue}
+                    onChange={(e) => setVenue(e.target.value)}
+                    placeholder="Event location"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="eventType">Event Type</Label>
+                  <Select value={eventType} onValueChange={setEventType}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Free">Free</SelectItem>
+                      <SelectItem value="Paid">Paid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {eventType === "Paid" && (
+                  <div>
+                    <Label htmlFor="cost">Cost</Label>
+                    <Input
+                      id="cost"
+                      type="number"
+                      step="0.01"
+                      value={cost}
+                      onChange={(e) => setCost(e.target.value)}
+                      placeholder="e.g. 50.00"
+                      className="mt-1"
+                    />
+                  </div>
+                )}
+
                 <div className="md:col-span-2">
                   <Label htmlFor="image">Image URL</Label>
                   <Input
@@ -302,6 +462,198 @@ export default function EventDetailPage() {
                       />
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Speakers Section */}
+              <div>
+                <Label>Speakers</Label>
+                <div className="space-y-4 mt-2">
+                  {speakers.map((speaker, index) => (
+                    <Card key={index} className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+                          <Input
+                            placeholder="Speaker Image URL"
+                            value={speaker.image}
+                            onChange={(e) => {
+                              const updated = [...speakers];
+                              updated[index].image = e.target.value;
+                              setSpeakers(updated);
+                            }}
+                          />
+                          <Input
+                            placeholder="Name"
+                            value={speaker.name}
+                            onChange={(e) => {
+                              const updated = [...speakers];
+                              updated[index].name = e.target.value;
+                              setSpeakers(updated);
+                            }}
+                          />
+                          <Input
+                            placeholder="Position"
+                            value={speaker.position}
+                            onChange={(e) => {
+                              const updated = [...speakers];
+                              updated[index].position = e.target.value;
+                              setSpeakers(updated);
+                            }}
+                          />
+                          <Textarea
+                            placeholder="Bio"
+                            value={speaker.bio}
+                            onChange={(e) => {
+                              const updated = [...speakers];
+                              updated[index].bio = e.target.value;
+                              setSpeakers(updated);
+                            }}
+                            rows={2}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSpeaker(index)}
+                          className="ml-2"
+                        >
+                          <X className="size-4" />
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                  <Card className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        placeholder="Speaker Image URL"
+                        value={newSpeaker.image}
+                        onChange={(e) =>
+                          setNewSpeaker({
+                            ...newSpeaker,
+                            image: e.target.value,
+                          })
+                        }
+                      />
+                      <Input
+                        placeholder="Name"
+                        value={newSpeaker.name}
+                        onChange={(e) =>
+                          setNewSpeaker({ ...newSpeaker, name: e.target.value })
+                        }
+                      />
+                      <Input
+                        placeholder="Position"
+                        value={newSpeaker.position}
+                        onChange={(e) =>
+                          setNewSpeaker({
+                            ...newSpeaker,
+                            position: e.target.value,
+                          })
+                        }
+                      />
+                      <Textarea
+                        placeholder="Bio"
+                        value={newSpeaker.bio}
+                        onChange={(e) =>
+                          setNewSpeaker({ ...newSpeaker, bio: e.target.value })
+                        }
+                        rows={2}
+                      />
+                    </div>
+                    <Button type="button" onClick={addSpeaker} className="mt-4">
+                      <Plus className="size-4 mr-2" />
+                      Add Speaker
+                    </Button>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Sponsors Section */}
+              <div>
+                <Label>Sponsors</Label>
+                <div className="space-y-4 mt-2">
+                  {sponsors.map((sponsor, index) => (
+                    <Card key={index} className="p-4">
+                      <div className="flex justify-between items-center">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+                          <Input
+                            placeholder="Sponsor Name"
+                            value={sponsor.name}
+                            onChange={(e) => {
+                              const updated = [...sponsors];
+                              updated[index].name = e.target.value;
+                              setSponsors(updated);
+                            }}
+                          />
+                          <Select
+                            value={sponsor.type}
+                            onValueChange={(value) => {
+                              const updated = [...sponsors];
+                              updated[index].type = value;
+                              setSponsors(updated);
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Premium">Premium</SelectItem>
+                              <SelectItem value="Community Partner">
+                                Community Partner
+                              </SelectItem>
+                              <SelectItem value="Gold">Gold</SelectItem>
+                              <SelectItem value="Silver">Silver</SelectItem>
+                              <SelectItem value="Bronze">Bronze</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSponsor(index)}
+                          className="ml-2"
+                        >
+                          <X className="size-4" />
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                  <Card className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        placeholder="Sponsor Name"
+                        value={newSponsor.name}
+                        onChange={(e) =>
+                          setNewSponsor({ ...newSponsor, name: e.target.value })
+                        }
+                      />
+                      <Select
+                        value={newSponsor.type}
+                        onValueChange={(value) =>
+                          setNewSponsor({ ...newSponsor, type: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Premium">Premium</SelectItem>
+                          <SelectItem value="Community Partner">
+                            Community Partner
+                          </SelectItem>
+                          <SelectItem value="Gold">Gold</SelectItem>
+                          <SelectItem value="Silver">Silver</SelectItem>
+                          <SelectItem value="Bronze">Bronze</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button type="button" onClick={addSponsor} className="mt-4">
+                      <Plus className="size-4 mr-2" />
+                      Add Sponsor
+                    </Button>
+                  </Card>
                 </div>
               </div>
 

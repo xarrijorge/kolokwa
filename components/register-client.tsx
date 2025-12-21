@@ -15,6 +15,12 @@ type EventInfo = {
   title: string;
   description?: string | null;
   date?: string | null;
+  numParticipants?: number | null;
+  venue?: string | null;
+  eventType?: string | null;
+  cost?: number | null;
+  speakers?: any[] | null;
+  sponsors?: any[] | null;
 };
 
 type RegisterClientProps = {
@@ -114,14 +120,83 @@ export function RegisterClient({ event }: RegisterClientProps) {
             <h2 className="text-xl font-bold mb-4">Event Details</h2>
             <div className="space-y-3 text-muted-foreground">
               <div className="flex justify-between">
-                <span className="font-medium">Duration:</span>
-                <span>3 hours</span>
+                <span className="font-medium">Date:</span>
+                <span>
+                  {event?.date
+                    ? new Date(event.date).toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : "TBA"}
+                </span>
               </div>
+              {event?.venue && (
+                <div className="flex justify-between">
+                  <span className="font-medium">Venue:</span>
+                  <span>{event.venue}</span>
+                </div>
+              )}
               <div className="flex justify-between">
-                <span className="font-medium">Time:</span>
-                <span>6:30 PM - 9:30 PM</span>
+                <span className="font-medium">Type:</span>
+                <span>
+                  {event?.eventType || "Free"}
+                  {event?.eventType === "Paid" &&
+                    event?.cost &&
+                    ` - $${event.cost}`}
+                </span>
               </div>
+              {event?.numParticipants && (
+                <div className="flex justify-between">
+                  <span className="font-medium">Expected Participants:</span>
+                  <span>{event.numParticipants}</span>
+                </div>
+              )}
             </div>
+
+            {event?.speakers && event.speakers.length > 0 && (
+              <div className="mt-6 space-y-4">
+                <h3 className="font-bold">Speakers:</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {event.speakers.map((speaker: any, index: number) => (
+                    <div key={index} className="flex items-center space-x-3">
+                      {speaker.image && (
+                        <img
+                          src={speaker.image}
+                          alt={speaker.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      )}
+                      <div>
+                        <p className="font-medium">{speaker.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {speaker.position}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {event?.sponsors && event.sponsors.length > 0 && (
+              <div className="mt-6 space-y-4">
+                <h3 className="font-bold">Sponsors:</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {event.sponsors.map((sponsor: any, index: number) => (
+                    <div key={index} className="flex items-center space-x-3">
+                      <div>
+                        <p className="font-medium">{sponsor.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {sponsor.type}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="mt-6 space-y-4">
               <h3 className="font-bold">What to Expect:</h3>
