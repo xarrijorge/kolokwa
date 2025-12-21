@@ -32,7 +32,9 @@ type EventsPageClientProps = {
 export function EventsPageClient({ events, tags }: EventsPageClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [dateFilter, setDateFilter] = useState<"all" | "upcoming" | "past">("all");
+  const [dateFilter, setDateFilter] = useState<"all" | "upcoming" | "past">(
+    "all",
+  );
 
   const filteredEvents = useMemo(() => {
     let result = events;
@@ -44,7 +46,7 @@ export function EventsPageClient({ events, tags }: EventsPageClientProps) {
         (ev) =>
           ev.title.toLowerCase().includes(query) ||
           ev.description?.toLowerCase().includes(query) ||
-          ev.tag?.toLowerCase().includes(query)
+          ev.tag?.toLowerCase().includes(query),
       );
     }
 
@@ -81,8 +83,8 @@ export function EventsPageClient({ events, tags }: EventsPageClientProps) {
   return (
     <main className="min-h-screen">
       {/* Hero Section */}
-      <section className="pt-24 sm:pt-32 pb-8 sm:pb-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-muted/50 to-background">
-        <div className="container mx-auto max-w-6xl">
+      <section className="pt-24 sm:pt-32 pb-8 sm:pb-12 px-4 sm:px-6 lg:px-8 bg-linear-to-b from-muted/50 to-background">
+        <div className="container mx-auto">
           <Link href="/">
             <Button variant="ghost" className="mb-6">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -102,10 +104,10 @@ export function EventsPageClient({ events, tags }: EventsPageClientProps) {
 
       {/* Search and Filters */}
       <section className="py-6 px-4 sm:px-6 lg:px-8 border-b bg-background sticky top-0 z-10">
-        <div className="container mx-auto max-w-6xl">
+        <div className="container mx-auto">
           <div className="flex flex-col gap-4">
             {/* Search Bar */}
-            <div className="relative flex-1">
+            <div className="relative flex-1 gap-2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
                 placeholder="Search events..."
@@ -204,7 +206,7 @@ export function EventsPageClient({ events, tags }: EventsPageClientProps) {
 
       {/* Events Grid */}
       <section className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto max-w-6xl">
+        <div className="container mx-auto">
           {/* Results Count */}
           <div className="mb-6 text-sm text-muted-foreground">
             {filteredEvents.length === events.length
@@ -228,7 +230,7 @@ export function EventsPageClient({ events, tags }: EventsPageClientProps) {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
               {filteredEvents.map((ev) => {
                 const img =
                   ev.image ??
@@ -252,7 +254,7 @@ export function EventsPageClient({ events, tags }: EventsPageClientProps) {
                       isPast ? "opacity-75" : ""
                     }`}
                   >
-                    <div className="aspect-video relative overflow-hidden bg-muted">
+                    <div className="aspect-video relative overflow-hidden bg-white">
                       <img
                         src={img}
                         alt={ev.title}
@@ -325,11 +327,11 @@ export function EventsPageClient({ events, tags }: EventsPageClientProps) {
             Want to host an event?
           </h2>
           <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-            Partner with KoloKwa TechGuild to organize tech events, workshops, or
-            meetups. Let's build Liberia's tech ecosystem together.
+            Partner with KoloKwa TechGuild to organize tech events, workshops,
+            or meetups. Let's build Liberia's tech ecosystem together.
           </p>
           <Button size="lg" asChild>
-            <Link href="/#contact">Get in Touch</Link>
+            <Link href="/contact">Get in Touch</Link>
           </Button>
         </div>
       </section>
