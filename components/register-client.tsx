@@ -1,4 +1,3 @@
-kolokwa/components/register-client.tsx
 "use client";
 
 import type React from "react";
@@ -10,7 +9,18 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
-export function RegisterClient() {
+type EventInfo = {
+  id: string;
+  title: string;
+  description?: string | null;
+  date?: string | null;
+};
+
+type RegisterClientProps = {
+  event?: EventInfo;
+};
+
+export function RegisterClient({ event }: RegisterClientProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -47,14 +57,16 @@ export function RegisterClient() {
           </Link>
 
           <div className="text-secondary font-bold text-sm mb-4 uppercase tracking-wide">
-            Starting Soon
+            {event?.date
+              ? new Date(event.date).toLocaleDateString()
+              : "Starting Soon"}
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
-            Join Code & Cocktails
+            {event ? `Register for ${event.title}` : "Join Code & Cocktails"}
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-            Sign up for our launch event—an intimate tech mixer celebrating
-            local innovation and building Liberia's tech community.
+            {event?.description ||
+              "Sign up for our launch event—an intimate tech mixer celebrating local innovation and building Liberia's tech community."}
           </p>
 
           {/* Event Details */}

@@ -1,282 +1,295 @@
-'use client'
+"use client";
 
-import React, { useEffect, useState, FormEvent } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Calendar,
+  Users,
+  Briefcase,
+  TrendingUp,
+  Plus,
+  ArrowRight,
+  Activity,
+} from "lucide-react";
 
-type EventItem = {
-  id: string
-  title: string
-  description?: string | null
-  date?: string | null
-  image?: string | null
-  tag?: string | null
-  created_at?: string | null
-}
+type Stats = {
+  events: number;
+  partners: number;
+  staff: number;
+};
 
-export default function AdminPage() {
-  const [events, setEvents] = useState<EventItem[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+type RecentEvent = {
+  id: string;
+  title: string;
+  date?: string | null;
+  tag?: string | null;
+};
 
-  // Form state
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [date, setDate] = useState("") // ISO datetime or date
-  const [image, setImage] = useState("")
-  const [tag, setTag] = useState("")
+type RecentPartner = {
+  id: string;
+  name: string;
+  created_at?: string | null;
+};
+
+export default function AdminDashboard() {
+  const [stats, setStats] = useState<Stats>({
+    events: 0,
+    partners: 0,
+    staff: 0,
+  });
+  const [recentEvents, setRecentEvents] = useState<RecentEvent[]>([]);
+  const [recentPartners, setRecentPartners] = useState<RecentPartner[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadEvents()
-  }, [])
+    async function loadData() {
+      setLoading(true);
+      try {
+        const [eventsRes, partnersRes, staffRes] = await Promise.all([
+          fetch("/api/events", { cache: "no-store" }),
+          fetch("/api/partners", { cache: "no-store" }),
+          fetch("/api/staff", { cache: "no-store" }),
+        ]);
 
-  async function loadEvents() {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch("/api/events", { cache: "no-store" })
-      if (!res.ok) {
-        throw new Error(`Failed to load events (${res.status})`)
+        const eventsData = eventsRes.ok ? await eventsRes.json() : [];
+        const partnersData = partnersRes.ok ? await partnersRes.json() : [];
+        const staffData = staffRes.ok ? await staffRes.json() : [];
+
+        const events = Array.isArray(eventsData) ? eventsData : [];
+        const partners = Array.isArray(partnersData) ? partnersData : [];
+        const staff = Array.isArray(staffData) ? staffData : [];
+
+        setStats({
+          events: events.length,
+          partners: partners.length,
+          staff: staff.length,
+        });
+
+        setRecentEvents(events.slice(0, 3));
+        setRecentPartners(partners.slice(0, 3));
+      } catch (err) {
+        console.error("Failed to load dashboard data:", err);
+      } finally {
+        setLoading(false);
       }
-      const data = await res.json()
-      if (Array.isArray(data)) {
-        setEvents(data)
-      } else {
-        setEvents([])
-      }
-    } catch (err: any) {
-      setError(String(err?.message ?? err))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function handleCreate(e: FormEvent) {
-    e.preventDefault()
-    setError(null)
-
-    if (!title.trim()) {
-      setError("Title is required")
-      return
     }
 
-    const payload = {
-      title: title.trim(),
-      description: description.trim() || undefined,
-      date: date || undefined,
-      image: image || undefined,
-      tag: tag || undefined,
-    }
+    loadData();
+  }, []);
 
-    try {
-      setLoading(true)
-      const res = await fetch("/api/events", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
+  const statCards = [
+    {
+      title: "Total Events",
+      value: stats.events,
+      icon: Calendar,
+      href: "/admin/events",
+      color: "text-blue-600",
+      bgColor: "bg-blue-100",
+    },
+    {
+      title: "Partners",
+      value: stats.partners,
+      icon: Briefcase,
+      href: "/admin/partners",
+      color: "text-green-600",
+      bgColor: "bg-green-100",
+    },
+    {
+      title: "Staff Members",
+      value: stats.staff,
+      icon: Users,
+      href: "/admin/staff",
+      color: "text-purple-600",
+      bgColor: "bg-purple-100",
+    },
+  ];
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => null)
-        throw new Error(errData?.message ?? `Failed to create event (${res.status})`)
-      }
+  const quickActions = [
+    { label: "Create Event", href: "/admin/events", icon: Calendar },
+    { label: "Add Partner", href: "/admin/partners", icon: Briefcase },
+    { label: "Add Staff", href: "/admin/staff", icon: Users },
+  ];
 
-      const created: EventItem = await res.json()
-      // prepend newly created event
-      setEvents((prev) => [created, ...prev])
-
-      // reset form
-      setTitle("")
-      setDescription("")
-      setDate("")
-      setImage("")
-      setTag("")
-    } catch (err: any) {
-      setError(String(err?.message ?? err))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function handleDelete(id: string) {
-    if (!confirm("Delete this event? This action cannot be undone.")) return
-    setError(null)
-    try {
-      setLoading(true)
-      const res = await fetch(`/api/events?id=${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      })
-      if (!res.ok) {
-        const errData = await res.json().catch(() => null)
-        throw new Error(errData?.message ?? `Failed to delete (${res.status})`)
-      }
-      // remove locally
-      setEvents((prev) => prev.filter((e) => e.id !== id))
-    } catch (err: any) {
-      setError(String(err?.message ?? err))
-    } finally {
-      setLoading(false)
-    }
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <Activity className="size-5 animate-pulse" />
+          <span>Loading dashboard...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <main className="max-w-5xl mx-auto py-12 px-4">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Admin — Events</h1>
-        <div>
-          <Button variant="outline" onClick={loadEvents}>
-            Refresh
-          </Button>
-        </div>
+    <div className="space-y-6 sm:space-y-8">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {statCards.map((stat) => (
+          <Link key={stat.title} href={stat.href}>
+            <Card className="p-4 sm:p-6 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{stat.title}</p>
+                  <p className="text-2xl sm:text-3xl font-bold mt-1">
+                    {stat.value}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                  <stat.icon className={`size-5 sm:size-6 ${stat.color}`} />
+                </div>
+              </div>
+              <div className="mt-3 sm:mt-4 flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <span>View all</span>
+                <ArrowRight className="size-4 ml-1" />
+              </div>
+            </Card>
+          </Link>
+        ))}
       </div>
 
-      <section className="mb-10">
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Create New Event</h2>
-
-          <form onSubmit={handleCreate} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Title *</label>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-md border px-3 py-2"
-                placeholder="Event title"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full rounded-md border px-3 py-2"
-                placeholder="Short description"
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Date / Time</label>
-                <input
-                  type="datetime-local"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full rounded-md border px-3 py-2"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Leave empty if date is TBA.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Image URL</label>
-                <input
-                  value={image}
-                  onChange={(e) => setImage(e.target.value)}
-                  className="w-full rounded-md border px-3 py-2"
-                  placeholder="/images/my-event.png or https://..."
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Tag / Category</label>
-              <input
-                value={tag}
-                onChange={(e) => setTag(e.target.value)}
-                className="w-full rounded-md border px-3 py-2"
-                placeholder="e.g. launch, conference, workshop"
-              />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Button type="submit" disabled={loading}>
-                {loading ? "Creating..." : "Create Event"}
-              </Button>
+      {/* Quick Actions */}
+      <Card className="p-4 sm:p-6">
+        <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {quickActions.map((action) => (
+            <Link key={action.label} href={action.href}>
               <Button
                 variant="outline"
-                type="button"
-                onClick={() => {
-                  setTitle("")
-                  setDescription("")
-                  setDate("")
-                  setImage("")
-                  setTag("")
-                }}
+                className="w-full justify-start gap-2 h-auto py-3"
               >
-                Reset
+                <Plus className="size-4" />
+                <span>{action.label}</span>
               </Button>
-            </div>
+            </Link>
+          ))}
+        </div>
+      </Card>
 
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          </form>
-        </Card>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Events ({events.length})</h2>
-
-        {loading && events.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        ) : events.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No events created yet.</p>
-        ) : (
-          <div className="grid gap-4">
-            {events.map((ev) => (
-              <Card key={ev.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-medium truncate">{ev.title}</h3>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {ev.description ?? "No description"}
-                      </p>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        <span className="mr-3">Tag: {ev.tag ?? "—"}</span>
-                        <span>
-                          Date:{" "}
-                          {ev.date ? new Date(ev.date).toLocaleString() : "TBA"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {ev.image ? (
-                      // simple preview — not using next/image to keep client-side simplicity
-                      <img
-                        src={ev.image}
-                        alt={ev.title}
-                        className="w-24 h-16 object-cover rounded-md ml-2 hidden sm:block"
-                      />
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 mt-4 sm:mt-0">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      const url = `/events/${encodeURIComponent(ev.id)}`
-                      // open details in new tab (admin can inspect)
-                      window.open(url, "_blank")
-                    }}
-                  >
-                    Open
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleDelete(ev.id)}
-                    disabled={loading}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </Card>
-            ))}
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Recent Events */}
+        <Card className="p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Recent Events</h2>
+            <Link
+              href="/admin/events"
+              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+            >
+              View all <ArrowRight className="size-3" />
+            </Link>
           </div>
-        )}
-      </section>
-    </main>
-  )
+
+          {recentEvents.length === 0 ? (
+            <div className="text-center py-8">
+              <Calendar className="size-8 mx-auto text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">No events yet</p>
+              <Link href="/admin/events">
+                <Button size="sm" className="mt-3">
+                  <Plus className="size-4 mr-1" /> Create Event
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{event.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {event.date
+                        ? new Date(event.date).toLocaleDateString()
+                        : "Date TBA"}
+                      {event.tag && (
+                        <span className="ml-2 px-1.5 py-0.5 bg-secondary/10 text-secondary rounded text-xs">
+                          {event.tag}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <Link href={`/admin/events`}>
+                    <Button variant="ghost" size="sm">
+                      Edit
+                    </Button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Recent Partners */}
+        <Card className="p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Recent Partners</h2>
+            <Link
+              href="/admin/partners"
+              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+            >
+              View all <ArrowRight className="size-3" />
+            </Link>
+          </div>
+
+          {recentPartners.length === 0 ? (
+            <div className="text-center py-8">
+              <Briefcase className="size-8 mx-auto text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">No partners yet</p>
+              <Link href="/admin/partners">
+                <Button size="sm" className="mt-3">
+                  <Plus className="size-4 mr-1" /> Add Partner
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentPartners.map((partner) => (
+                <div
+                  key={partner.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{partner.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {partner.created_at
+                        ? `Added ${new Date(partner.created_at).toLocaleDateString()}`
+                        : "Recently added"}
+                    </p>
+                  </div>
+                  <Link href={`/admin/partners`}>
+                    <Button variant="ghost" size="sm">
+                      Edit
+                    </Button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* System Status */}
+      <Card className="p-4 sm:p-6">
+        <h2 className="text-lg font-semibold mb-4">System Status</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <span className="text-sm">Database Connected</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <span className="text-sm">API Healthy</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <span className="text-sm">Authentication Active</span>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
 }

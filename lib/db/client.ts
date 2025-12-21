@@ -120,7 +120,7 @@ export async function getEventById(id: string): Promise<DbEvent | null> {
   const c = getClient();
 
   const sql = `SELECT id, title, description, date, image, tag, created_at FROM events WHERE id = ? LIMIT 1`;
-  const res = await c.execute(sql, [id]);
+  const res = await c.execute({ sql, args: [id] });
   const rows = res.rows ?? [];
   return rows.length ? rows[0] : null;
 }
@@ -147,15 +147,18 @@ export async function createEvent(input: CreateEventInput): Promise<DbEvent> {
     INSERT INTO events (id, title, description, date, image, tag, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
-  await c.execute(sql, [
-    id,
-    input.title,
-    input.description ?? null,
-    input.date ?? null,
-    input.image ?? null,
-    input.tag ?? null,
-    created_at,
-  ]);
+  await c.execute({
+    sql,
+    args: [
+      id,
+      input.title,
+      input.description ?? null,
+      input.date ?? null,
+      input.image ?? null,
+      input.tag ?? null,
+      created_at,
+    ],
+  });
 
   return {
     id,
@@ -213,7 +216,7 @@ export async function updateEvent(
   const sql = `UPDATE events SET ${fields.join(", ")} WHERE id = ?`;
   args.push(input.id);
 
-  await c.execute(sql, args);
+  await c.execute({ sql, args });
 
   return getEventById(input.id);
 }
@@ -226,7 +229,7 @@ export async function deleteEvent(id: string): Promise<boolean> {
   const c = getClient();
 
   const sql = `DELETE FROM events WHERE id = ?`;
-  const res = await c.execute(sql, [id]);
+  const res = await c.execute({ sql, args: [id] });
   // Some clients return changes/rowsAffected; for simplicity fetch the row to confirm deletion.
   const exists = await getEventById(id);
   return exists === null;
@@ -261,6 +264,8 @@ export async function seedIfEmpty() {
  * - email TEXT UNIQUE NOT NULL
  * - password TEXT NOT NULL   -- NOTE: store hashed passwords in production
  * - role TEXT
+ * - name TEXT
+ * - username TEXT
  * - created_at TEXT
  */
 export async function ensureStaffTable() {
@@ -271,10 +276,20 @@ export async function ensureStaffTable() {
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       role TEXT,
+      name TEXT,
+      username TEXT,
       created_at TEXT
     );
   `;
   await c.execute(sql);
+
+  // Add columns if not exists (for existing tables)
+  try {
+    await c.execute(`ALTER TABLE staff_users ADD COLUMN name TEXT`);
+  } catch {}
+  try {
+    await c.execute(`ALTER TABLE staff_users ADD COLUMN username TEXT`);
+  } catch {}
 
   // Create index on email for faster lookups (if not exists)
   const indexSql = `
@@ -289,8 +304,8 @@ export async function ensureStaffTable() {
 export async function getStaffByEmail(email: string) {
   await ensureStaffTable();
   const c = getClient();
-  const sql = `SELECT id, email, password, role, created_at FROM staff_users WHERE email = ? LIMIT 1`;
-  const res = await c.execute(sql, [email]);
+  const sql = `SELECT id, email, password, role, name, username, created_at FROM staff_users WHERE email = ? LIMIT 1`;
+  const res = await c.execute({ sql, args: [email] });
   const rows = res.rows ?? [];
   return rows.length ? rows[0] : null;
 }
@@ -313,6 +328,8 @@ export async function createStaff(input: {
   email: string;
   password: string;
   role?: string;
+  name?: string;
+  username?: string;
 }) {
   await ensureStaffTable();
   const c = getClient();
@@ -323,20 +340,27 @@ export async function createStaff(input: {
   const hashedPassword = await bcrypt.hash(input.password, 10);
 
   const sql = `
-    INSERT INTO staff_users (id, email, password, role, created_at)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO staff_users (id, email, password, role, name, username, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
-  await c.execute(sql, [
-    id,
-    input.email,
-    hashedPassword,
-    input.role ?? "staff",
-    created_at,
-  ]);
+  await c.execute({
+    sql,
+    args: [
+      id,
+      input.email,
+      hashedPassword,
+      input.role ?? "staff",
+      input.name ?? null,
+      input.username ?? null,
+      created_at,
+    ],
+  });
   return {
     id,
     email: input.email,
     role: input.role ?? "staff",
+    name: input.name ?? null,
+    username: input.username ?? null,
     created_at,
   };
 }
@@ -347,9 +371,58 @@ export async function createStaff(input: {
 export async function listStaff() {
   await ensureStaffTable();
   const c = getClient();
-  const sql = `SELECT id, email, role, created_at FROM staff_users ORDER BY created_at DESC`;
+  const sql = `SELECT id, email, name, username, role, created_at FROM staff_users ORDER BY created_at DESC`;
   const res = await c.execute(sql);
   return res.rows ?? [];
+}
+
+/**
+ * Update a staff user
+ */
+export async function updateStaff(
+  id: string,
+  input: {
+    email?: string;
+    password?: string;
+    role?: string;
+    name?: string;
+    username?: string;
+  },
+) {
+  await ensureStaffTable();
+  const c = getClient();
+
+  const fields: string[] = [];
+  const args: any[] = [];
+
+  if (input.email !== undefined) {
+    fields.push("email = ?");
+    args.push(input.email);
+  }
+  if (input.password !== undefined) {
+    const hashed = await bcrypt.hash(input.password, 10);
+    fields.push("password = ?");
+    args.push(hashed);
+  }
+  if (input.role !== undefined) {
+    fields.push("role = ?");
+    args.push(input.role);
+  }
+  if (input.name !== undefined) {
+    fields.push("name = ?");
+    args.push(input.name);
+  }
+  if (input.username !== undefined) {
+    fields.push("username = ?");
+    args.push(input.username);
+  }
+
+  if (fields.length === 0) return;
+
+  const sql = `UPDATE staff_users SET ${fields.join(", ")} WHERE id = ?`;
+  args.push(id);
+
+  await c.execute({ sql, args });
 }
 
 /**
@@ -358,13 +431,13 @@ export async function listStaff() {
 export async function deleteStaff(id: string) {
   await ensureStaffTable();
   const c = getClient();
-  await c.execute(`DELETE FROM staff_users WHERE id = ?`, [id]);
+  await c.execute({ sql: `DELETE FROM staff_users WHERE id = ?`, args: [id] });
   const exists = await getStaffByEmail(id); // will return null, but we attempt to confirm
   // return true if row doesn't exist; best-effort check
-  const check = await c.execute(
-    `SELECT id FROM staff_users WHERE id = ? LIMIT 1`,
-    [id],
-  );
+  const check = await c.execute({
+    sql: `SELECT id FROM staff_users WHERE id = ? LIMIT 1`,
+    args: [id],
+  });
   return (check.rows ?? []).length === 0;
 }
 
@@ -439,13 +512,16 @@ export async function createPartner(input: {
     INSERT INTO partners (id, name, website, logo, created_at)
     VALUES (?, ?, ?, ?, ?)
   `;
-  await c.execute(sql, [
-    id,
-    input.name,
-    input.website ?? null,
-    input.logo ?? null,
-    created_at,
-  ]);
+  await c.execute({
+    sql,
+    args: [
+      id,
+      input.name,
+      input.website ?? null,
+      input.logo ?? null,
+      created_at,
+    ],
+  });
   return {
     id,
     name: input.name,
@@ -472,10 +548,10 @@ export async function listPartners() {
 export async function deletePartner(id: string) {
   await ensurePartnersTable();
   const c = getClient();
-  await c.execute(`DELETE FROM partners WHERE id = ?`, [id]);
-  const check = await c.execute(
-    `SELECT id FROM partners WHERE id = ? LIMIT 1`,
-    [id],
-  );
+  await c.execute({ sql: `DELETE FROM partners WHERE id = ?`, args: [id] });
+  const check = await c.execute({
+    sql: `SELECT id FROM partners WHERE id = ? LIMIT 1`,
+    args: [id],
+  });
   return (check.rows ?? []).length === 0;
 }

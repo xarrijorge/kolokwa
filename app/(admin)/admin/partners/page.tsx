@@ -1,10 +1,27 @@
 "use client";
 
 import React, { useEffect, useState, FormEvent } from "react";
-import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash, ExternalLink } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Trash2,
+  ExternalLink,
+  Plus,
+  Search,
+  X,
+  Briefcase,
+  Loader2,
+} from "lucide-react";
 
 type Partner = {
   id: string;
@@ -16,11 +33,15 @@ type Partner = {
 
 export default function PartnersAdminPage() {
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showForm, setShowForm] = useState(false);
 
-  // form state
+  // Form state
   const [name, setName] = useState("");
   const [website, setWebsite] = useState("");
   const [logo, setLogo] = useState("");
@@ -29,17 +50,30 @@ export default function PartnersAdminPage() {
     loadPartners();
   }, []);
 
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredPartners(partners);
+    } else {
+      const query = searchQuery.toLowerCase();
+      setFilteredPartners(
+        partners.filter(
+          (p) =>
+            p.name.toLowerCase().includes(query) ||
+            p.website?.toLowerCase().includes(query),
+        ),
+      );
+    }
+  }, [searchQuery, partners]);
+
   async function loadPartners() {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/partners", { cache: "no-store" });
       if (!res.ok) {
-        // API can return fallback data with status 200; handle non-ok as an error
         throw new Error(`Failed to load partners (${res.status})`);
       }
       const data = await res.json();
-      // handle both direct list and { fallback: [...] } shapes
       const list: Partner[] = Array.isArray(data)
         ? data
         : Array.isArray(data?.fallback)
@@ -54,9 +88,17 @@ export default function PartnersAdminPage() {
     }
   }
 
+  function resetForm() {
+    setName("");
+    setWebsite("");
+    setLogo("");
+    setShowForm(false);
+  }
+
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
 
     if (!name.trim()) {
       setError("Name is required");
@@ -86,15 +128,13 @@ export default function PartnersAdminPage() {
 
       const created: Partner = await res.json();
       setPartners((prev) => [created, ...prev]);
-
-      // reset form
-      setName("");
-      setWebsite("");
-      setLogo("");
+      setSuccess("Partner created successfully");
+      resetForm();
     } catch (err: any) {
       setError(String(err?.message ?? err));
     } finally {
       setSubmitting(false);
+      setTimeout(() => setSuccess(null), 3000);
     }
   }
 
@@ -113,6 +153,8 @@ export default function PartnersAdminPage() {
         );
       }
       setPartners((prev) => prev.filter((p) => p.id !== id));
+      setSuccess("Partner deleted successfully");
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
       setError(String(err?.message ?? err));
     } finally {
@@ -121,186 +163,259 @@ export default function PartnersAdminPage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto py-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Partners</h1>
           <p className="text-sm text-muted-foreground">
-            Add and manage partners shown across the site.
+            Manage partner organizations
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Link
-            href="/admin"
-            className="text-sm px-3 py-2 rounded-md hover:bg-muted/10"
-          >
-            Back to Admin
-          </Link>
-          <Button variant="outline" onClick={loadPartners} disabled={loading}>
-            Refresh
-          </Button>
-        </div>
+        <Button onClick={() => setShowForm(true)}>
+          <Plus className="size-4 mr-2" /> Add Partner
+        </Button>
       </div>
 
-      <section className="mb-8">
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Create Partner</h2>
+      {/* Status Messages */}
+      {error && (
+        <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="p-3 rounded-lg bg-green-100 text-green-800 text-sm">
+          {success}
+        </div>
+      )}
+
+      {/* Create Form */}
+      {showForm && (
+        <Card className="p-4 sm:p-6 border-2 border-primary/20">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Add New Partner</h2>
+            <Button variant="ghost" size="sm" onClick={resetForm}>
+              <X className="size-4" />
+            </Button>
+          </div>
 
           <form onSubmit={handleCreate} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Name *</label>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-md border px-3 py-2"
-                placeholder="Partner name"
-                required
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Partner name"
+                  className="mt-1"
+                  required
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Website</label>
-              <input
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                className="w-full rounded-md border px-3 py-2"
-                placeholder="https://example.org"
-              />
-            </div>
+              <div>
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder="https://example.org"
+                  className="mt-1"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Logo (image URL)
-              </label>
-              <input
-                value={logo}
-                onChange={(e) => setLogo(e.target.value)}
-                className="w-full rounded-md border px-3 py-2"
-                placeholder="/images/partner.png or https://..."
-              />
-              {logo ? (
-                <div className="mt-3">
-                  <div className="text-xs text-muted-foreground mb-1">
-                    Preview
+              <div className="md:col-span-2">
+                <Label htmlFor="logo">Logo URL</Label>
+                <Input
+                  id="logo"
+                  value={logo}
+                  onChange={(e) => setLogo(e.target.value)}
+                  placeholder="/images/partner.png or https://..."
+                  className="mt-1"
+                />
+                {logo && (
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Preview:
+                    </p>
+                    <div className="w-24 h-16 rounded-md overflow-hidden border bg-white">
+                      <img
+                        src={logo}
+                        alt="Logo preview"
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-36 h-20 rounded-md overflow-hidden border">
-                    {/* using img for simplicity */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={logo}
-                      alt="logo preview"
-                      className="w-full h-full object-contain bg-white"
-                    />
-                  </div>
-                </div>
-              ) : null}
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center gap-3 mt-2">
+            <div className="flex items-center gap-3 pt-2">
               <Button type="submit" disabled={submitting}>
-                {submitting ? "Creating..." : "Create Partner"}
+                {submitting ? (
+                  <Loader2 className="size-4 animate-spin mr-2" />
+                ) : null}
+                Create Partner
               </Button>
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => {
-                  setName("");
-                  setWebsite("");
-                  setLogo("");
-                }}
-              >
-                Reset
+              <Button type="button" variant="outline" onClick={resetForm}>
+                Cancel
               </Button>
             </div>
-
-            {error ? (
-              <p className="text-sm text-destructive mt-2">{error}</p>
-            ) : null}
           </form>
         </Card>
-      </section>
+      )}
 
-      <section>
-        <h2 className="text-lg font-semibold mb-4">
-          All partners ({partners.length})
-        </h2>
+      {/* Search and Table */}
+      <Card className="overflow-hidden">
+        <div className="p-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search partners..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {filteredPartners.length} partner
+              {filteredPartners.length !== 1 && "s"}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadPartners}
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                "Refresh"
+              )}
+            </Button>
+          </div>
+        </div>
 
         {loading && partners.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        ) : partners.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No partners yet.</p>
+          <div className="text-center py-12">
+            <Loader2 className="size-8 animate-spin mx-auto text-muted-foreground" />
+            <p className="text-sm text-muted-foreground mt-2">
+              Loading partners...
+            </p>
+          </div>
+        ) : filteredPartners.length === 0 ? (
+          <div className="text-center py-12">
+            <Briefcase className="size-12 mx-auto text-muted-foreground mb-3" />
+            <p className="text-muted-foreground mb-4">
+              {searchQuery
+                ? "No partners match your search"
+                : "No partners added yet"}
+            </p>
+            {!searchQuery && (
+              <Button onClick={() => setShowForm(true)}>
+                <Plus className="size-4 mr-2" /> Add First Partner
+              </Button>
+            )}
+          </div>
         ) : (
-          <div className="grid gap-4">
-            {partners.map((p) => (
-              <Card
-                key={p.id}
-                className="p-4 flex items-center justify-between"
-              >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-16 h-12 rounded-md overflow-hidden bg-white border flex items-center justify-center">
-                    {p.logo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={p.logo}
-                        alt={p.name}
-                        className="w-full h-full object-contain"
-                      />
-                    ) : (
-                      <div className="text-xs text-muted-foreground px-2 text-center">
-                        {p.name.slice(0, 2).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{p.name}</div>
-                    <div className="text-sm text-muted-foreground truncate">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16">Logo</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    Website
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">Added</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPartners.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      {p.logo ? (
+                        <div className="w-12 h-10 rounded overflow-hidden bg-white border flex items-center justify-center">
+                          <img
+                            src={p.logo}
+                            alt={p.name}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-10 bg-muted rounded flex items-center justify-center">
+                          <span className="text-xs font-medium text-muted-foreground">
+                            {p.name.slice(0, 2).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <p className="font-medium">{p.name}</p>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       {p.website ? (
                         <a
                           href={p.website}
                           target="_blank"
                           rel="noreferrer"
-                          className="underline"
+                          className="text-sm text-blue-600 hover:underline truncate max-w-[200px] block"
                         >
-                          {p.website}
+                          {p.website.replace(/^https?:\/\//, "")}
                         </a>
                       ) : (
-                        <span className="text-xs">No website</span>
+                        <span className="text-muted-foreground text-sm">—</span>
                       )}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                       {p.created_at
-                        ? new Date(p.created_at).toLocaleString()
-                        : ""}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {p.website ? (
-                    <a
-                      href={p.website}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted/10"
-                    >
-                      <ExternalLink className="size-4" /> Visit
-                    </a>
-                  ) : null}
-
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleDelete(p.id)}
-                  >
-                    <Trash className="size-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
+                        ? new Date(p.created_at).toLocaleDateString()
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        {p.website && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(p.website!, "_blank")}
+                            title="Visit website"
+                          >
+                            <ExternalLink className="size-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(p.id)}
+                          disabled={loading}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          title="Delete"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
-      </section>
-    </main>
+      </Card>
+    </div>
   );
 }

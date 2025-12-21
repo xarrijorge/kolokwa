@@ -78,17 +78,20 @@ export async function GET() {
           error: String(err),
           fallback: sample,
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
   } catch (err: any) {
-    return NextResponse.json({ message: "Server error", error: String(err) }, { status: 500 });
+    return NextResponse.json(
+      { message: "Server error", error: String(err) },
+      { status: 500 },
+    );
   }
 }
 
 /**
  * POST /api/staff
- * - Body: { email: string, password: string, role?: string }
+ * - Body: { email: string, password: string, role?: string, name?: string, username?: string }
  * - Requires an authenticated admin user (cookie-based JWT).
  */
 export async function POST(request: NextRequest) {
@@ -106,21 +109,39 @@ export async function POST(request: NextRequest) {
     // Body
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== "object") {
-      return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Invalid JSON body" },
+        { status: 400 },
+      );
     }
 
-    const { email, password, role: newRole } = body as Record<string, any>;
+    const {
+      email,
+      password,
+      role: newRole,
+      name,
+      username,
+    } = body as Record<string, any>;
     if (!email || typeof email !== "string") {
-      return NextResponse.json({ message: "Field `email` is required" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Field `email` is required" },
+        { status: 400 },
+      );
     }
     if (!password || typeof password !== "string") {
-      return NextResponse.json({ message: "Field `password` is required" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Field `password` is required" },
+        { status: 400 },
+      );
     }
 
     // DB
     const db = await loadDbSafe();
     if (!db || typeof db.createStaff !== "function") {
-      return NextResponse.json({ message: "Database not configured. Cannot create staff." }, { status: 503 });
+      return NextResponse.json(
+        { message: "Database not configured. Cannot create staff." },
+        { status: 503 },
+      );
     }
 
     try {
@@ -129,14 +150,105 @@ export async function POST(request: NextRequest) {
         email: String(email).trim(),
         password: String(password),
         role: typeof newRole === "string" ? String(newRole).trim() : "staff",
+        name: typeof name === "string" ? String(name).trim() : undefined,
+        username:
+          typeof username === "string" ? String(username).trim() : undefined,
       });
 
       return NextResponse.json(created, { status: 201 });
     } catch (err: any) {
-      return NextResponse.json({ message: "Failed to create staff", error: String(err) }, { status: 500 });
+      return NextResponse.json(
+        { message: "Failed to create staff", error: String(err) },
+        { status: 500 },
+      );
     }
   } catch (err: any) {
-    return NextResponse.json({ message: "Server error", error: String(err) }, { status: 500 });
+    return NextResponse.json(
+      { message: "Server error", error: String(err) },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * PUT /api/staff?id=<id>
+ * - Body: { email?: string, password?: string, role?: string, name?: string, username?: string }
+ * - Requires authenticated admin.
+ */
+export async function PUT(request: NextRequest) {
+  try {
+    const user = getUserFromRequest(request);
+    if (!user)
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    const role = (user as any).role ?? "staff";
+    if (role !== "admin")
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+
+    // Determine id
+    const url = new URL(request.url);
+    let id = url.searchParams.get("id");
+    if (!id) {
+      const body = await request.json().catch(() => null);
+      if (
+        body &&
+        typeof body === "object" &&
+        typeof (body as any).id === "string"
+      ) {
+        id = (body as any).id;
+      }
+    }
+    if (!id)
+      return NextResponse.json(
+        { message: "Field `id` is required" },
+        { status: 400 },
+      );
+
+    // Body
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json(
+        { message: "Invalid JSON body" },
+        { status: 400 },
+      );
+    }
+
+    const {
+      email,
+      password,
+      role: newRole,
+      name,
+      username,
+    } = body as Record<string, any>;
+
+    const updateData: any = {};
+    if (email !== undefined) updateData.email = String(email).trim();
+    if (password !== undefined) updateData.password = String(password);
+    if (newRole !== undefined) updateData.role = String(newRole).trim();
+    if (name !== undefined) updateData.name = String(name).trim();
+    if (username !== undefined) updateData.username = String(username).trim();
+
+    const db = await loadDbSafe();
+    if (!db || typeof db.updateStaff !== "function") {
+      return NextResponse.json(
+        { message: "Database not configured. Cannot update staff." },
+        { status: 503 },
+      );
+    }
+
+    try {
+      await db.updateStaff(id, updateData);
+      return NextResponse.json({ message: "Updated" }, { status: 200 });
+    } catch (err: any) {
+      return NextResponse.json(
+        { message: "Failed to update staff", error: String(err) },
+        { status: 500 },
+      );
+    }
+  } catch (err: any) {
+    return NextResponse.json(
+      { message: "Server error", error: String(err) },
+      { status: 500 },
+    );
   }
 }
 
@@ -148,36 +260,58 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
-    if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (!user)
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     const role = (user as any).role ?? "staff";
-    if (role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    if (role !== "admin")
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
     // Determine id
     const url = new URL(request.url);
     let id = url.searchParams.get("id");
     if (!id) {
       const body = await request.json().catch(() => null);
-      if (body && typeof body === "object" && typeof (body as any).id === "string") {
+      if (
+        body &&
+        typeof body === "object" &&
+        typeof (body as any).id === "string"
+      ) {
         id = (body as any).id;
       }
     }
-    if (!id) return NextResponse.json({ message: "Field `id` is required" }, { status: 400 });
+    if (!id)
+      return NextResponse.json(
+        { message: "Field `id` is required" },
+        { status: 400 },
+      );
 
     const db = await loadDbSafe();
     if (!db || typeof db.deleteStaff !== "function") {
-      return NextResponse.json({ message: "Database not configured. Cannot delete staff." }, { status: 503 });
+      return NextResponse.json(
+        { message: "Database not configured. Cannot delete staff." },
+        { status: 503 },
+      );
     }
 
     try {
       const ok = await db.deleteStaff(id);
       if (!ok) {
-        return NextResponse.json({ message: "Failed to delete staff" }, { status: 500 });
+        return NextResponse.json(
+          { message: "Failed to delete staff" },
+          { status: 500 },
+        );
       }
       return NextResponse.json({ message: "Deleted" }, { status: 200 });
     } catch (err: any) {
-      return NextResponse.json({ message: "Failed to delete staff", error: String(err) }, { status: 500 });
+      return NextResponse.json(
+        { message: "Failed to delete staff", error: String(err) },
+        { status: 500 },
+      );
     }
   } catch (err: any) {
-    return NextResponse.json({ message: "Server error", error: String(err) }, { status: 500 });
+    return NextResponse.json(
+      { message: "Server error", error: String(err) },
+      { status: 500 },
+    );
   }
 }

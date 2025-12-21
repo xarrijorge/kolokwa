@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getEventById } from "@/lib/db/client";
+import { RegisterClient } from "@/components/register-client";
+import Link from "next/link";
 
 type Props = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const id = params.id;
+  const { id } = await params;
   const ev = await getEventById(id);
 
   if (!ev) {
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function EventPage({ params }: Props) {
-  const id = params.id;
+  const { id } = await params;
   const ev = await getEventById(id);
 
   if (!ev) {
@@ -50,48 +51,14 @@ export default async function EventPage({ params }: Props) {
     );
   }
 
-  const dateLabel = ev.date ? new Date(ev.date).toLocaleString() : "TBA";
-
   return (
-    <main className="container mx-auto py-16 px-4">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-4">{ev.title}</h1>
-
-        {ev.image ? (
-          // Using a simple img tag to avoid runtime config for next/image external domains.
-          <img
-            src={ev.image}
-            alt={ev.title}
-            className="w-full h-auto rounded-md mb-6"
-          />
-        ) : null}
-
-        <div className="text-sm text-muted-foreground mb-6">{dateLabel}</div>
-
-        <div className="prose max-w-none mb-8">
-          {ev.description ? (
-            <p>{ev.description}</p>
-          ) : (
-            <p>No description provided.</p>
-          )}
-        </div>
-
-        <div className="flex gap-3">
-          <Link
-            href="/register"
-            className="inline-block rounded-md bg-secondary px-4 py-2 text-white hover:opacity-95"
-          >
-            Register
-          </Link>
-
-          <Link
-            href="/#events"
-            className="inline-block rounded-md border px-4 py-2"
-          >
-            Back to events
-          </Link>
-        </div>
-      </div>
-    </main>
+    <RegisterClient
+      event={{
+        id: ev.id as string,
+        title: ev.title as string,
+        description: ev.description as string | null,
+        date: ev.date as string | null,
+      }}
+    />
   );
 }

@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Link from "next/link";
 
 /**
@@ -24,6 +26,13 @@ type SettingsState = {
   mailerliteApiKey: string;
 };
 
+type ProfileState = {
+  name: string;
+  username: string;
+  email: string;
+  password: string;
+};
+
 const STORAGE_KEY = "kolokwa_admin_settings_v1";
 
 export default function AdminSettingsPage() {
@@ -34,7 +43,16 @@ export default function AdminSettingsPage() {
     mailerliteApiKey: "",
   });
 
+  const [profile, setProfile] = useState<ProfileState>({
+    name: "",
+    username: "",
+    email: "",
+    password: "",
+  });
+
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,6 +66,22 @@ export default function AdminSettingsPage() {
     } catch {
       // ignore parse errors
     }
+
+    // Load current user
+    fetch("/api/auth")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.user) {
+          setCurrentUser(data.user);
+          setProfile({
+            name: data.user.name || "",
+            username: data.user.username || "",
+            email: data.user.email || "",
+            password: "",
+          });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   function update<K extends keyof SettingsState>(
@@ -71,6 +105,38 @@ export default function AdminSettingsPage() {
     } finally {
       setLoading(false);
       // clear message after 4s
+      setTimeout(() => setMessage(null), 4000);
+    }
+  }
+
+  async function handleUpdateProfile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentUser) return;
+    setLoadingProfile(true);
+    setMessage(null);
+    try {
+      const payload: any = {
+        name: profile.name.trim() || undefined,
+        username: profile.username.trim() || undefined,
+        email: profile.email.trim(),
+      };
+      if (profile.password) {
+        payload.password = profile.password;
+      }
+      const res = await fetch(`/api/staff?id=${currentUser.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to update profile");
+      }
+      setMessage("Profile updated successfully");
+      setProfile((p) => ({ ...p, password: "" })); // clear password
+    } catch (err: any) {
+      setMessage("Failed to update profile: " + String(err?.message ?? err));
+    } finally {
+      setLoadingProfile(false);
       setTimeout(() => setMessage(null), 4000);
     }
   }
@@ -122,7 +188,7 @@ export default function AdminSettingsPage() {
         <div>
           <h1 className="text-2xl font-bold">Settings</h1>
           <p className="text-sm text-muted-foreground">
-            Manage site-wide configuration (placeholder UI).
+            Manage site-wide configuration and your profile.
           </p>
         </div>
 
@@ -146,121 +212,196 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      <section className="mb-6">
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Site Information</h2>
+      <Tabs defaultValue="general" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+        </TabsList>
 
-          <div className="grid gap-3">
-            <label className="text-sm font-medium">Site Title</label>
-            <Input
-              value={settings.siteTitle}
-              onChange={(e) => update("siteTitle", e.target.value)}
-            />
+        <TabsContent value="general" className="space-y-6">
+          <section>
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold mb-4">Site Information</h2>
 
-            <label className="text-sm font-medium">Site Description</label>
-            <Textarea
-              value={settings.siteDescription}
-              onChange={(e) => update("siteDescription", e.target.value)}
-            />
-          </div>
-        </Card>
-      </section>
+              <div className="grid gap-3">
+                <label className="text-sm font-medium">Site Title</label>
+                <Input
+                  value={settings.siteTitle}
+                  onChange={(e) => update("siteTitle", e.target.value)}
+                />
 
-      <section className="mb-6">
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Integrations</h2>
+                <label className="text-sm font-medium">Site Description</label>
+                <Textarea
+                  value={settings.siteDescription}
+                  onChange={(e) => update("siteDescription", e.target.value)}
+                />
+              </div>
+            </Card>
+          </section>
 
-          <div className="grid gap-4">
-            <div>
-              <label className="text-sm font-medium block mb-1">
-                Newsletter (MailerLite) Integration
-              </label>
-              <input
-                className="w-full rounded-md border px-3 py-2"
-                placeholder="MailerLite API key (stored locally in this demo)"
-                value={settings.mailerliteApiKey}
-                onChange={(e) => update("mailerliteApiKey", e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                In production, store API keys in environment variables or a
-                secure secrets manager and never expose them to the browser.
-              </p>
-            </div>
+          <section>
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold mb-4">Integrations</h2>
 
-            <div className="flex items-center gap-3">
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={settings.newsletterEnabled}
+              <div className="grid gap-4">
+                <div>
+                  <label className="text-sm font-medium block mb-1">
+                    Newsletter (MailerLite) Integration
+                  </label>
+                  <input
+                    className="w-full rounded-md border px-3 py-2"
+                    placeholder="MailerLite API key (stored locally in this demo)"
+                    value={settings.mailerliteApiKey}
+                    onChange={(e) => update("mailerliteApiKey", e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    In production, store API keys in environment variables or a
+                    secure secrets manager and never expose them to the browser.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={settings.newsletterEnabled}
+                      onChange={(e) =>
+                        update("newsletterEnabled", e.target.checked)
+                      }
+                      className="h-4 w-4"
+                    />
+                    <span className="text-sm">Enable newsletter signup</span>
+                  </label>
+                </div>
+              </div>
+            </Card>
+          </section>
+
+          <section>
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold mb-4">
+                Local Persistence (Demo)
+              </h2>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <Button onClick={handleSave} disabled={loading}>
+                  {loading ? "Saving..." : "Save Settings (local)"}
+                </Button>
+
+                <Button variant="outline" onClick={handleReset}>
+                  Reset to Defaults
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" onClick={exportJSON}>
+                    Export JSON
+                  </Button>
+
+                  <label className="inline-flex items-center gap-2 cursor-pointer text-sm">
+                    <input
+                      type="file"
+                      accept="application/json"
+                      onChange={(e) => importJSON(e.target.files?.[0] ?? null)}
+                      className="hidden"
+                    />
+                    <span className="underline">Import JSON</span>
+                  </label>
+                </div>
+              </div>
+
+              {message ? (
+                <div className="mt-4 text-sm text-muted-foreground">
+                  {message}
+                </div>
+              ) : null}
+            </Card>
+          </section>
+
+          <section>
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold mb-4">What's next</h2>
+              <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
+                <li>
+                  Persist settings in the database (add a `settings` table) or a
+                  dedicated storage endpoint.
+                </li>
+                <li>
+                  Protect settings APIs behind admin authentication and role
+                  checks (server-side).
+                </li>
+                <li>
+                  Move secrets (API keys) into environment variables or a
+                  secrets manager — don't expose them to the client.
+                </li>
+              </ul>
+            </Card>
+          </section>
+        </TabsContent>
+
+        <TabsContent value="profile">
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Profile</h2>
+            <form onSubmit={handleUpdateProfile} className="space-y-4">
+              <div>
+                <Label htmlFor="profile-name">Name</Label>
+                <Input
+                  id="profile-name"
+                  value={profile.name}
                   onChange={(e) =>
-                    update("newsletterEnabled", e.target.checked)
+                    setProfile((p) => ({ ...p, name: e.target.value }))
                   }
-                  className="h-4 w-4"
+                  placeholder="Your full name"
                 />
-                <span className="text-sm">Enable newsletter signup</span>
-              </label>
-            </div>
-          </div>
-        </Card>
-      </section>
-
-      <section className="mb-6">
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">
-            Local Persistence (Demo)
-          </h2>
-
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <Button onClick={handleSave} disabled={loading}>
-              {loading ? "Saving..." : "Save Settings (local)"}
-            </Button>
-
-            <Button variant="outline" onClick={handleReset}>
-              Reset to Defaults
-            </Button>
-
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" onClick={exportJSON}>
-                Export JSON
+              </div>
+              <div>
+                <Label htmlFor="profile-username">Username</Label>
+                <Input
+                  id="profile-username"
+                  value={profile.username}
+                  onChange={(e) =>
+                    setProfile((p) => ({ ...p, username: e.target.value }))
+                  }
+                  placeholder="Your username"
+                />
+              </div>
+              <div>
+                <Label htmlFor="profile-email">Email</Label>
+                <Input
+                  id="profile-email"
+                  type="email"
+                  value={profile.email}
+                  onChange={(e) =>
+                    setProfile((p) => ({ ...p, email: e.target.value }))
+                  }
+                  placeholder="Your email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="profile-password">
+                  Password (leave blank to keep current)
+                </Label>
+                <Input
+                  id="profile-password"
+                  type="password"
+                  value={profile.password}
+                  onChange={(e) =>
+                    setProfile((p) => ({ ...p, password: e.target.value }))
+                  }
+                  placeholder="New password"
+                />
+              </div>
+              <Button type="submit" disabled={loadingProfile}>
+                {loadingProfile ? "Updating..." : "Update Profile"}
               </Button>
-
-              <label className="inline-flex items-center gap-2 cursor-pointer text-sm">
-                <input
-                  type="file"
-                  accept="application/json"
-                  onChange={(e) => importJSON(e.target.files?.[0] ?? null)}
-                  className="hidden"
-                />
-                <span className="underline">Import JSON</span>
-              </label>
-            </div>
-          </div>
-
-          {message ? (
-            <div className="mt-4 text-sm text-muted-foreground">{message}</div>
-          ) : null}
-        </Card>
-      </section>
-
-      <section>
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">What's next</h2>
-          <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
-            <li>
-              Persist settings in the database (add a `settings` table) or a
-              dedicated storage endpoint.
-            </li>
-            <li>
-              Protect settings APIs behind admin authentication and role checks
-              (server-side).
-            </li>
-            <li>
-              Move secrets (API keys) into environment variables or a secrets
-              manager — don't expose them to the client.
-            </li>
-          </ul>
-        </Card>
-      </section>
+            </form>
+            {message && (
+              <div className="mt-4 text-sm text-muted-foreground">
+                {message}
+              </div>
+            )}
+          </Card>
+        </TabsContent>
+      </Tabs>
     </main>
   );
 }

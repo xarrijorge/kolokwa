@@ -116,11 +116,19 @@ export async function POST(request: NextRequest) {
       sub: staff.id,
       email: staff.email,
       role: staff.role ?? "staff",
+      name: staff.name ?? null,
+      username: staff.username ?? null,
     };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
     const res = NextResponse.json(
       {
-        user: { id: staff.id, email: staff.email, role: staff.role ?? "staff" },
+        user: {
+          id: staff.id,
+          email: staff.email,
+          role: staff.role ?? "staff",
+          name: staff.name ?? null,
+          username: staff.username ?? null,
+        },
       },
       { status: 200 },
     );
@@ -150,6 +158,8 @@ export async function GET(request: NextRequest) {
         id: payload.sub ?? null,
         email: payload.email ?? null,
         role: payload.role ?? null,
+        name: (payload as any).name ?? null,
+        username: (payload as any).username ?? null,
       };
       return NextResponse.json({ user }, { status: 200 });
     } catch {

@@ -10,7 +10,6 @@ import {
   Briefcase,
   Settings,
   LogOut,
-  FilePlus,
   Menu,
   X,
   ChevronLeft,
@@ -36,6 +35,8 @@ type User = {
   id?: string | null;
   email?: string | null;
   role?: string | null;
+  name?: string | null;
+  username?: string | null;
 } | null;
 
 function NavItem({
@@ -57,7 +58,7 @@ function NavItem({
       className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all text-sm ${
         active
           ? "bg-primary text-primary-foreground font-medium shadow-sm"
-          : "hover:bg-accent/50 text-foreground hover:text-accent-foreground"
+          : "hover:bg-accent/50"
       } ${collapsed ? "justify-center" : ""}`}
       title={collapsed ? label : undefined}
     >
@@ -149,15 +150,15 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 text-foreground">
-      {/* Top bar for small screens */}
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b shadow-sm md:hidden">
+    <div className="min-h-screen bg-muted/30 text-foreground flex flex-col">
+      {/* Top bar */}
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen((s) => !s)}
               aria-label="Toggle menu"
-              className="p-2 rounded-md hover:bg-accent/50 transition-colors"
+              className="p-2 rounded-md hover:bg-accent/50 transition-colors md:hidden"
             >
               {mobileOpen ? (
                 <X className="w-6 h-6" />
@@ -171,23 +172,38 @@ export default function AdminLayout({
           </div>
 
           <div className="flex items-center gap-3">
-            {loadingUser ? (
-              <div className="text-sm text-muted-foreground">Checking...</div>
-            ) : user ? (
-              <div className="text-sm">{user.email ?? "Staff"}</div>
-            ) : (
-              <Link href="/login" className="text-sm text-muted-foreground">
-                Sign in
-              </Link>
-            )}
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="hidden md:flex p-2 rounded-md hover:bg-accent/50 transition-colors"
+              aria-label={
+                sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
+              }
+            >
+              {sidebarCollapsed ? (
+                <ChevronRight className="size-4" />
+              ) : (
+                <ChevronLeft className="size-4" />
+              )}
+            </button>
+            <div className="md:hidden text-sm">
+              {loadingUser ? (
+                <div className="text-sm text-muted-foreground">Checking...</div>
+              ) : user ? (
+                <div className="text-sm">{user.email ?? "Staff"}</div>
+              ) : (
+                <Link href="/login" className="text-sm text-muted-foreground">
+                  Sign in
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex flex-1">
         {/* Sidebar */}
         <aside
-          className={`hidden md:flex flex-col h-screen sticky top-0 bg-card border-r shadow-sm transition-all duration-300 ${
+          className={`hidden md:flex flex-col min-h-full bg-card border-r shadow-sm transition-all duration-300 ${
             sidebarCollapsed ? "w-20" : "w-64"
           }`}
           aria-label="Admin sidebar"
@@ -270,21 +286,6 @@ export default function AdminLayout({
               </Link>
             )}
           </div>
-
-          {/* Toggle button */}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="absolute -right-3 top-8 bg-card border shadow-md rounded-full p-1.5 hover:bg-accent/50 transition-colors z-50"
-            aria-label={
-              sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
-            }
-          >
-            {sidebarCollapsed ? (
-              <ChevronRight className="size-4" />
-            ) : (
-              <ChevronLeft className="size-4" />
-            )}
-          </button>
         </aside>
 
         {/* Mobile drawer */}
@@ -322,51 +323,7 @@ export default function AdminLayout({
 
         {/* Main content */}
         <main className="flex-1 min-w-0 overflow-x-hidden">
-          <div className="p-6 md:p-8">
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">
-                  {pathname === "/admin"
-                    ? "Dashboard"
-                    : pathname
-                        ?.split("/")
-                        .slice(2)
-                        .join(" ")
-                        .replace(/-/g, " ")
-                        .split(" ")
-                        .map(
-                          (word) =>
-                            word.charAt(0).toUpperCase() + word.slice(1),
-                        )
-                        .join(" ") || "Admin"}
-                </h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Manage the site content and users
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Link
-                  href="/admin/partners"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors text-sm font-medium"
-                >
-                  <FilePlus className="size-4" />
-                  <span className="hidden sm:inline">New Partner</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border hover:bg-accent/50 transition-colors text-sm font-medium md:hidden"
-                >
-                  <LogOut className="size-4" />
-                  Sign out
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-card rounded-lg shadow-sm border p-6">
-              {children}
-            </div>
-          </div>
+          <div className="p-4 sm:p-6 lg:p-8">{children}</div>
         </main>
       </div>
     </div>
