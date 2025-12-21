@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type EventInfo = {
   id: string;
@@ -29,11 +30,50 @@ export function RegisterClient({ event }: RegisterClientProps) {
     role: "",
     interests: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Form submission logic here
-    console.log("[v0] Form submitted:", formData);
+    setError("");
+    setSuccess("");
+
+    if (!formData.email.trim()) {
+      setError("Email is required");
+      return;
+    }
+
+    if (!event) {
+      setError("Event not found");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`/api/events/${event.id}/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: formData.email.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess(
+          "Registration successful! Check your email for an invite link.",
+        );
+      } else {
+        setError(data.error || "Registration failed");
+      }
+    } catch (error) {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (
@@ -198,14 +238,31 @@ export function RegisterClient({ event }: RegisterClientProps) {
               />
             </div>
 
-            <Button type="submit" size="lg" className="w-full">
-              Complete Registration
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {success && (
+              <Alert>
+                <AlertDescription>{success}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? "Registering..." : "Complete Registration"}
             </Button>
           </form>
 
           <p className="text-sm text-muted-foreground mt-6 text-center">
-            By registering, you'll receive updates about the event and be
-            included in the community directory.
+            By registering, you'll receive an email invite to create your
+            account and access the event.
           </p>
         </div>
       </section>

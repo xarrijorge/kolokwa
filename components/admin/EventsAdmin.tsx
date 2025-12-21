@@ -32,6 +32,7 @@ type EventItem = {
   image?: string | null;
   tag?: string | null;
   created_at?: string | null;
+  participantsCount?: number;
 };
 
 export default function EventsAdmin() {
@@ -76,7 +77,29 @@ export default function EventsAdmin() {
         : Array.isArray(data?.fallback)
           ? data.fallback
           : [];
-      setEvents(list);
+
+      // Fetch participants count for each event
+      const eventsWithCounts = await Promise.all(
+        list.map(async (event: EventItem) => {
+          try {
+            const participantsRes = await fetch(
+              `/api/events/${event.id}/participants`,
+            );
+            if (participantsRes.ok) {
+              const participants = await participantsRes.json();
+              return { ...event, participantsCount: participants.length };
+            }
+          } catch (error) {
+            console.error(
+              `Failed to fetch participants for event ${event.id}:`,
+              error,
+            );
+          }
+          return { ...event, participantsCount: 0 };
+        }),
+      );
+
+      setEvents(eventsWithCounts);
     } catch (err: any) {
       setError(String(err?.message ?? err));
     } finally {
@@ -207,6 +230,9 @@ export default function EventsAdmin() {
                   <TableHead className="hidden md:table-cell">Tag</TableHead>
                   <TableHead className="hidden sm:table-cell">Date</TableHead>
                   <TableHead className="hidden lg:table-cell">
+                    Participants
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
                     Created
                   </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -255,6 +281,9 @@ export default function EventsAdmin() {
                             year: "numeric",
                           })
                         : "TBA"}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm">
+                      {ev.participantsCount ?? 0}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                       {ev.created_at

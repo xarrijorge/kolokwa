@@ -29,6 +29,12 @@ type DbEvent = {
   date?: string | null; // ISO string
   image?: string | null;
   tag?: string | null;
+  numParticipants?: number | null;
+  venue?: string | null;
+  eventType?: string | null; // 'Free' or 'Paid'
+  cost?: number | null;
+  speakers?: string | null; // JSON string of array
+  sponsors?: string | null; // JSON string of array
   created_at?: string | null;
 };
 
@@ -80,6 +86,12 @@ export async function ensureTables() {
       date TEXT,
       image TEXT,
       tag TEXT,
+      numParticipants INTEGER,
+      venue TEXT,
+      eventType TEXT,
+      cost REAL,
+      speakers TEXT,
+      sponsors TEXT,
       created_at TEXT
     );
   `;
@@ -88,6 +100,27 @@ export async function ensureTables() {
   // but calling `.execute(sql, params?)` is the common approach. We don't rely on
   // driver-specific features here beyond execute.
   await c.execute(createSql);
+
+  // Add new columns if not exists (for existing tables)
+  try {
+    await c.execute(`ALTER TABLE events ADD COLUMN numParticipants INTEGER`);
+  } catch {}
+  try {
+    await c.execute(`ALTER TABLE events ADD COLUMN venue TEXT`);
+  } catch {}
+  try {
+    await c.execute(`ALTER TABLE events ADD COLUMN eventType TEXT`);
+  } catch {}
+  try {
+    await c.execute(`ALTER TABLE events ADD COLUMN cost REAL`);
+  } catch {}
+  try {
+    await c.execute(`ALTER TABLE events ADD COLUMN speakers TEXT`);
+  } catch {}
+  try {
+    await c.execute(`ALTER TABLE events ADD COLUMN sponsors TEXT`);
+  } catch {}
+
   didEnsureTables = true;
 }
 
@@ -99,7 +132,7 @@ export async function getEvents(): Promise<DbEvent[]> {
   const c = getClient();
 
   const sql = `
-    SELECT id, title, description, date, image, tag, created_at
+    SELECT id, title, description, date, image, tag, numParticipants, venue, eventType, cost, speakers, sponsors, created_at
     FROM events
     ORDER BY
       CASE WHEN date IS NULL THEN 1 ELSE 0 END,
@@ -119,7 +152,7 @@ export async function getEventById(id: string): Promise<DbEvent | null> {
   await ensureTables();
   const c = getClient();
 
-  const sql = `SELECT id, title, description, date, image, tag, created_at FROM events WHERE id = ? LIMIT 1`;
+  const sql = `SELECT id, title, description, date, image, tag, numParticipants, venue, eventType, cost, speakers, sponsors, created_at FROM events WHERE id = ? LIMIT 1`;
   const res = await c.execute({ sql, args: [id] });
   const rows = res.rows ?? [];
   return rows.length ? rows[0] : null;
@@ -131,6 +164,12 @@ export type CreateEventInput = {
   date?: string;
   image?: string;
   tag?: string;
+  numParticipants?: number;
+  venue?: string;
+  eventType?: string;
+  cost?: number;
+  speakers?: any[]; // array of speaker objects
+  sponsors?: any[]; // array of sponsor objects
 };
 
 /**
@@ -144,8 +183,8 @@ export async function createEvent(input: CreateEventInput): Promise<DbEvent> {
   const created_at = new Date().toISOString();
 
   const sql = `
-    INSERT INTO events (id, title, description, date, image, tag, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO events (id, title, description, date, image, tag, numParticipants, venue, eventType, cost, speakers, sponsors, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   await c.execute({
     sql,
@@ -156,6 +195,12 @@ export async function createEvent(input: CreateEventInput): Promise<DbEvent> {
       input.date ?? null,
       input.image ?? null,
       input.tag ?? null,
+      input.numParticipants ?? null,
+      input.venue ?? null,
+      input.eventType ?? null,
+      input.cost ?? null,
+      input.speakers ? JSON.stringify(input.speakers) : null,
+      input.sponsors ? JSON.stringify(input.sponsors) : null,
       created_at,
     ],
   });
@@ -167,6 +212,12 @@ export async function createEvent(input: CreateEventInput): Promise<DbEvent> {
     date: input.date ?? null,
     image: input.image ?? null,
     tag: input.tag ?? null,
+    numParticipants: input.numParticipants ?? null,
+    venue: input.venue ?? null,
+    eventType: input.eventType ?? null,
+    cost: input.cost ?? null,
+    speakers: input.speakers ? JSON.stringify(input.speakers) : null,
+    sponsors: input.sponsors ? JSON.stringify(input.sponsors) : null,
     created_at,
   };
 }
@@ -206,6 +257,30 @@ export async function updateEvent(
   if (input.tag !== undefined) {
     fields.push("tag = ?");
     args.push(input.tag);
+  }
+  if (input.numParticipants !== undefined) {
+    fields.push("numParticipants = ?");
+    args.push(input.numParticipants);
+  }
+  if (input.venue !== undefined) {
+    fields.push("venue = ?");
+    args.push(input.venue);
+  }
+  if (input.eventType !== undefined) {
+    fields.push("eventType = ?");
+    args.push(input.eventType);
+  }
+  if (input.cost !== undefined) {
+    fields.push("cost = ?");
+    args.push(input.cost);
+  }
+  if (input.speakers !== undefined) {
+    fields.push("speakers = ?");
+    args.push(input.speakers ? JSON.stringify(input.speakers) : null);
+  }
+  if (input.sponsors !== undefined) {
+    fields.push("sponsors = ?");
+    args.push(input.sponsors ? JSON.stringify(input.sponsors) : null);
   }
 
   if (fields.length === 0) {
@@ -554,4 +629,354 @@ export async function deletePartner(id: string) {
     args: [id],
   });
   return (check.rows ?? []).length === 0;
+}
+
+/**
+ * USERS table for participants
+ *
+ * Columns:
+ * - id TEXT PRIMARY KEY
+ * - email TEXT UNIQUE NOT NULL
+ * - password TEXT NOT NULL
+ * - name TEXT
+ * - username TEXT
+ * - verified BOOLEAN DEFAULT FALSE
+ * - created_at TEXT
+ */
+export async function ensureUsersTable() {
+  const c = getClient();
+  const sql = `
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      name TEXT,
+      username TEXT,
+      verified BOOLEAN DEFAULT FALSE,
+      created_at TEXT
+    );
+  `;
+  await c.execute(sql);
+
+  // Create index on email
+  const indexSql = `
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+  `;
+  await c.execute(indexSql);
+}
+
+/**
+ * Get a user by email
+ */
+export async function getUserByEmail(email: string) {
+  await ensureUsersTable();
+  const c = getClient();
+  const sql = `SELECT id, email, password, name, username, verified, created_at FROM users WHERE email = ? LIMIT 1`;
+  const res = await c.execute({ sql, args: [email] });
+  const rows = res.rows ?? [];
+  return rows.length ? rows[0] : null;
+}
+
+/**
+ * Get user by id
+ */
+export async function getUserById(id: string) {
+  await ensureUsersTable();
+  const c = getClient();
+  const sql = `SELECT id, email, password, name, username, verified, created_at FROM users WHERE id = ? LIMIT 1`;
+  const res = await c.execute({ sql, args: [id] });
+  const rows = res.rows ?? [];
+  return rows.length ? rows[0] : null;
+}
+
+/**
+ * Create a new user
+ */
+export async function createUser(input: {
+  email: string;
+  password: string;
+  name?: string;
+  username?: string;
+}) {
+  await ensureUsersTable();
+  const c = getClient();
+  const id = randomUUID();
+  const created_at = new Date().toISOString();
+
+  const hashedPassword = await bcrypt.hash(input.password, 10);
+
+  const sql = `
+    INSERT INTO users (id, email, password, name, username, verified, created_at)
+    VALUES (?, ?, ?, ?, ?, FALSE, ?)
+  `;
+  await c.execute({
+    sql,
+    args: [
+      id,
+      input.email,
+      hashedPassword,
+      input.name ?? null,
+      input.username ?? null,
+      created_at,
+    ],
+  });
+  return {
+    id,
+    email: input.email,
+    name: input.name ?? null,
+    username: input.username ?? null,
+    verified: false,
+    created_at,
+  };
+}
+
+/**
+ * Update user
+ */
+export async function updateUser(
+  id: string,
+  input: {
+    email?: string;
+    password?: string;
+    name?: string;
+    username?: string;
+    verified?: boolean;
+  },
+) {
+  await ensureUsersTable();
+  const c = getClient();
+
+  const fields: string[] = [];
+  const args: any[] = [];
+
+  if (input.email !== undefined) {
+    fields.push("email = ?");
+    args.push(input.email);
+  }
+  if (input.password !== undefined) {
+    const hashed = await bcrypt.hash(input.password, 10);
+    fields.push("password = ?");
+    args.push(hashed);
+  }
+  if (input.name !== undefined) {
+    fields.push("name = ?");
+    args.push(input.name);
+  }
+  if (input.username !== undefined) {
+    fields.push("username = ?");
+    args.push(input.username);
+  }
+  if (input.verified !== undefined) {
+    fields.push("verified = ?");
+    args.push(input.verified ? 1 : 0);
+  }
+
+  if (fields.length === 0) return;
+
+  const sql = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
+  args.push(id);
+
+  await c.execute({ sql, args });
+}
+
+/**
+ * PENDING SIGNUPS table
+ *
+ * Columns:
+ * - id TEXT PRIMARY KEY
+ * - email TEXT NOT NULL
+ * - event_id TEXT NOT NULL
+ * - invite_token TEXT UNIQUE NOT NULL
+ * - created_at TEXT
+ */
+export async function ensurePendingSignupsTable() {
+  const c = getClient();
+  const sql = `
+    CREATE TABLE IF NOT EXISTS pending_signups (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      event_id TEXT NOT NULL,
+      invite_token TEXT UNIQUE NOT NULL,
+      created_at TEXT
+    );
+  `;
+  await c.execute(sql);
+
+  // Create index on token
+  const indexSql = `
+    CREATE INDEX IF NOT EXISTS idx_pending_signups_token ON pending_signups(invite_token);
+  `;
+  await c.execute(indexSql);
+}
+
+/**
+ * Create pending signup
+ */
+export async function createPendingSignup(input: {
+  email: string;
+  event_id: string;
+  invite_token: string;
+}) {
+  await ensurePendingSignupsTable();
+  const c = getClient();
+  const id = randomUUID();
+  const created_at = new Date().toISOString();
+
+  const sql = `
+    INSERT INTO pending_signups (id, email, event_id, invite_token, created_at)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+  await c.execute({
+    sql,
+    args: [id, input.email, input.event_id, input.invite_token, created_at],
+  });
+  return { id, ...input, created_at };
+}
+
+/**
+ * Get pending signup by token
+ */
+export async function getPendingSignupByToken(token: string) {
+  await ensurePendingSignupsTable();
+  const c = getClient();
+  const sql = `SELECT id, email, event_id, invite_token, created_at FROM pending_signups WHERE invite_token = ? LIMIT 1`;
+  const res = await c.execute({ sql, args: [token] });
+  const rows = res.rows ?? [];
+  return rows.length ? rows[0] : null;
+}
+
+/**
+ * Delete pending signup
+ */
+export async function deletePendingSignup(token: string) {
+  await ensurePendingSignupsTable();
+  const c = getClient();
+  await c.execute({
+    sql: `DELETE FROM pending_signups WHERE invite_token = ?`,
+    args: [token],
+  });
+}
+
+/**
+ * PARTICIPANTS table
+ *
+ * Columns:
+ * - id TEXT PRIMARY KEY
+ * - user_id TEXT NOT NULL
+ * - event_id TEXT NOT NULL
+ * - qr_code TEXT UNIQUE NOT NULL
+ * - status TEXT DEFAULT 'confirmed'
+ * - created_at TEXT
+ */
+export async function ensureParticipantsTable() {
+  const c = getClient();
+  const sql = `
+    CREATE TABLE IF NOT EXISTS participants (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      event_id TEXT NOT NULL,
+      qr_code TEXT UNIQUE NOT NULL,
+      status TEXT DEFAULT 'confirmed',
+      created_at TEXT
+    );
+  `;
+  await c.execute(sql);
+
+  // Create indexes
+  await c.execute(
+    `CREATE INDEX IF NOT EXISTS idx_participants_user_id ON participants(user_id);`,
+  );
+  await c.execute(
+    `CREATE INDEX IF NOT EXISTS idx_participants_event_id ON participants(event_id);`,
+  );
+  await c.execute(
+    `CREATE INDEX IF NOT EXISTS idx_participants_qr_code ON participants(qr_code);`,
+  );
+}
+
+/**
+ * Create participant
+ */
+export async function createParticipant(input: {
+  user_id: string;
+  event_id: string;
+  qr_code: string;
+  status?: string;
+}) {
+  await ensureParticipantsTable();
+  const c = getClient();
+  const id = randomUUID();
+  const created_at = new Date().toISOString();
+
+  const sql = `
+    INSERT INTO participants (id, user_id, event_id, qr_code, status, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `;
+  await c.execute({
+    sql,
+    args: [
+      id,
+      input.user_id,
+      input.event_id,
+      input.qr_code,
+      input.status ?? "confirmed",
+      created_at,
+    ],
+  });
+  return { id, ...input, status: input.status ?? "confirmed", created_at };
+}
+
+/**
+ * Get participants by event
+ */
+export async function getParticipantsByEvent(event_id: string) {
+  await ensureParticipantsTable();
+  const c = getClient();
+  const sql = `
+    SELECT p.id, p.user_id, p.event_id, p.qr_code, p.status, p.created_at,
+           u.email, u.name, u.username
+    FROM participants p
+    JOIN users u ON p.user_id = u.id
+    WHERE p.event_id = ?
+    ORDER BY p.created_at DESC
+  `;
+  const res = await c.execute({ sql, args: [event_id] });
+  return res.rows ?? [];
+}
+
+/**
+ * Get participant by QR code
+ */
+export async function getParticipantByQR(qr_code: string) {
+  await ensureParticipantsTable();
+  const c = getClient();
+  const sql = `
+    SELECT p.id, p.user_id, p.event_id, p.qr_code, p.status, p.created_at,
+           u.email, u.name, u.username, e.title as event_title
+    FROM participants p
+    JOIN users u ON p.user_id = u.id
+    JOIN events e ON p.event_id = e.id
+    WHERE p.qr_code = ? LIMIT 1
+  `;
+  const res = await c.execute({ sql, args: [qr_code] });
+  const rows = res.rows ?? [];
+  return rows.length ? rows[0] : null;
+}
+
+/**
+ * Get user's events (participants)
+ */
+export async function getUserEvents(user_id: string) {
+  await ensureParticipantsTable();
+  const c = getClient();
+  const sql = `
+    SELECT p.id, p.event_id, p.qr_code, p.status, p.created_at,
+           e.title, e.description, e.date, e.image, e.venue
+    FROM participants p
+    JOIN events e ON p.event_id = e.id
+    WHERE p.user_id = ? AND p.status = 'confirmed'
+    ORDER BY e.date DESC
+  `;
+  const res = await c.execute({ sql, args: [user_id] });
+  return res.rows ?? [];
 }

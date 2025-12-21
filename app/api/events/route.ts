@@ -172,10 +172,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title, description, date, image, tag } = body as Record<
-      string,
-      any
-    >;
+    const {
+      title,
+      description,
+      date,
+      image,
+      tag,
+      numParticipants,
+      venue,
+      eventType,
+      cost,
+      speakers,
+      sponsors,
+    } = body as Record<string, any>;
 
     if (!title || typeof title !== "string" || title.trim() === "") {
       return NextResponse.json(
@@ -190,6 +199,13 @@ export async function POST(request: NextRequest) {
       date: date ? String(date) : undefined,
       image: image ? String(image) : undefined,
       tag: tag ? String(tag) : undefined,
+      numParticipants:
+        numParticipants !== undefined ? Number(numParticipants) : undefined,
+      venue: venue ? String(venue) : undefined,
+      eventType: eventType ? String(eventType) : undefined,
+      cost: cost !== undefined ? Number(cost) : undefined,
+      speakers: speakers ? speakers : undefined,
+      sponsors: sponsors ? sponsors : undefined,
     });
 
     return NextResponse.json(created, { status: 201 });
@@ -241,10 +257,20 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { id, title, description, date, image, tag } = body as Record<
-      string,
-      any
-    >;
+    const {
+      id,
+      title,
+      description,
+      date,
+      image,
+      tag,
+      numParticipants,
+      venue,
+      eventType,
+      cost,
+      speakers,
+      sponsors,
+    } = body as Record<string, any>;
 
     if (!id || typeof id !== "string") {
       return NextResponse.json(
@@ -265,6 +291,13 @@ export async function PUT(request: NextRequest) {
       date: date !== undefined ? String(date) : undefined,
       image: image !== undefined ? String(image) : undefined,
       tag: tag !== undefined ? String(tag) : undefined,
+      numParticipants:
+        numParticipants !== undefined ? Number(numParticipants) : undefined,
+      venue: venue !== undefined ? String(venue) : undefined,
+      eventType: eventType !== undefined ? String(eventType) : undefined,
+      cost: cost !== undefined ? Number(cost) : undefined,
+      speakers: speakers !== undefined ? speakers : undefined,
+      sponsors: sponsors !== undefined ? sponsors : undefined,
     });
 
     return NextResponse.json(updated, { status: 200 });
