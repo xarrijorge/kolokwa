@@ -877,10 +877,18 @@ export async function ensureParticipantsTable() {
       event_id TEXT NOT NULL,
       qr_code TEXT UNIQUE NOT NULL,
       status TEXT DEFAULT 'confirmed',
+      checked_in BOOLEAN DEFAULT FALSE,
       created_at TEXT
     );
   `;
   await c.execute(sql);
+
+  // Add new column if not exists
+  try {
+    await c.execute(
+      `ALTER TABLE participants ADD COLUMN checked_in BOOLEAN DEFAULT FALSE`,
+    );
+  } catch {}
 
   // Create indexes
   await c.execute(
@@ -902,6 +910,7 @@ export async function createParticipant(input: {
   event_id: string;
   qr_code: string;
   status?: string;
+  checked_in?: boolean;
 }) {
   await ensureParticipantsTable();
   const c = getClient();
@@ -909,8 +918,8 @@ export async function createParticipant(input: {
   const created_at = new Date().toISOString();
 
   const sql = `
-    INSERT INTO participants (id, user_id, event_id, qr_code, status, created_at)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO participants (id, user_id, event_id, qr_code, status, checked_in, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
   await c.execute({
     sql,
@@ -920,10 +929,17 @@ export async function createParticipant(input: {
       input.event_id,
       input.qr_code,
       input.status ?? "confirmed",
+      input.checked_in ?? false,
       created_at,
     ],
   });
-  return { id, ...input, status: input.status ?? "confirmed", created_at };
+  return {
+    id,
+    ...input,
+    status: input.status ?? "confirmed",
+    checked_in: input.checked_in ?? false,
+    created_at,
+  };
 }
 
 /**
@@ -933,7 +949,7 @@ export async function getParticipantsByEvent(event_id: string) {
   await ensureParticipantsTable();
   const c = getClient();
   const sql = `
-    SELECT p.id, p.user_id, p.event_id, p.qr_code, p.status, p.created_at,
+    SELECT p.id, p.user_id, p.event_id, p.qr_code, p.status, p.checked_in, p.created_at,
            u.email, u.name, u.username
     FROM participants p
     JOIN users u ON p.user_id = u.id
@@ -951,7 +967,7 @@ export async function getParticipantByQR(qr_code: string) {
   await ensureParticipantsTable();
   const c = getClient();
   const sql = `
-    SELECT p.id, p.user_id, p.event_id, p.qr_code, p.status, p.created_at,
+    SELECT p.id, p.user_id, p.event_id, p.qr_code, p.status, p.checked_in, p.created_at,
            u.email, u.name, u.username, e.title as event_title
     FROM participants p
     JOIN users u ON p.user_id = u.id
@@ -970,7 +986,7 @@ export async function getUserEvents(user_id: string) {
   await ensureParticipantsTable();
   const c = getClient();
   const sql = `
-    SELECT p.id, p.event_id, p.qr_code, p.status, p.created_at,
+    SELECT p.id, p.event_id, p.qr_code, p.status, p.checked_in, p.created_at,
            e.title, e.description, e.date, e.image, e.venue
     FROM participants p
     JOIN events e ON p.event_id = e.id
@@ -979,4 +995,28 @@ export async function getUserEvents(user_id: string) {
   `;
   const res = await c.execute({ sql, args: [user_id] });
   return res.rows ?? [];
+}
+
+/**
+ * Check in a participant by QR code
+ */
+export async function checkInParticipant(qr_code: string) {
+  await ensureParticipantsTable();
+  const c = getClient();
+
+  // First, get the participant to verify it exists
+  const participant = await getParticipantByQR(qr_code);
+  if (!participant) {
+    return { success: false, error: "Participant not found" };
+  }
+
+  if (participant.checked_in) {
+    return { success: false, error: "Already checked in" };
+  }
+
+  // Update checked_in status
+  const sql = `UPDATE participants SET checked_in = TRUE WHERE qr_code = ?`;
+  await c.execute({ sql, args: [qr_code] });
+
+  return { success: true, participant };
 }

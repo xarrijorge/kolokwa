@@ -135,7 +135,9 @@ export default function EventDetailPage() {
           </div>
         </div>
         <Card className="p-6">
-          <p className="text-muted-foreground">The requested event could not be found.</p>
+          <p className="text-muted-foreground">
+            The requested event could not be found.
+          </p>
         </Card>
       </div>
     );
@@ -310,6 +312,12 @@ export default function EventDetailPage() {
                   ) : null}
                   Update Event
                 </Button>
+                <Link href={`/admin/events/${event.id}/checkin`}>
+                  <Button type="button" variant="default">
+                    <Users className="size-4 mr-2" />
+                    Check-In Participants
+                  </Button>
+                </Link>
                 <Link href={`/events/${event.id}`} target="_blank">
                   <Button type="button" variant="outline">
                     View Public Page

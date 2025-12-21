@@ -43,7 +43,9 @@ export default async function ParticipantDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Welcome, {user.name || user.email}</h1>
+        <h1 className="text-3xl font-bold">
+          Welcome, {user.name || user.email}
+        </h1>
         <p className="text-gray-600">Your event dashboard</p>
       </div>
 
@@ -60,7 +62,9 @@ export default async function ParticipantDashboard() {
               <div className="space-y-2">
                 <p className="text-sm text-gray-600">
                   <strong>Date:</strong>{" "}
-                  {event.date ? new Date(event.date).toLocaleDateString() : "TBD"}
+                  {event.date
+                    ? new Date(event.date).toLocaleDateString()
+                    : "TBD"}
                 </p>
                 {event.venue && (
                   <p className="text-sm text-gray-600">
@@ -73,19 +77,35 @@ export default async function ParticipantDashboard() {
               </div>
 
               <div className="space-y-2">
-                <h4 className="font-semibold">Your QR Code</h4>
-                <div className="flex justify-center">
-                  <Image
-                    src={event.qr_code}
-                    alt="Event QR Code"
-                    width={150}
-                    height={150}
-                    className="border rounded"
-                  />
-                </div>
-                <p className="text-xs text-center text-gray-500">
-                  Show this at the event for check-in
-                </p>
+                <h4 className="font-semibold">Check-In Status</h4>
+                {event.checked_in ? (
+                  <div className="text-center">
+                    <Badge
+                      variant="default"
+                      className="bg-green-100 text-green-800"
+                    >
+                      ✓ Checked In
+                    </Badge>
+                    <p className="text-xs text-center text-gray-500 mt-2">
+                      You have successfully checked in to this event
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex justify-center">
+                      <Image
+                        src={event.qr_code}
+                        alt="Event QR Code"
+                        width={150}
+                        height={150}
+                        className="border rounded"
+                      />
+                    </div>
+                    <p className="text-xs text-center text-gray-500">
+                      Show this at the event for check-in
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -33,6 +33,7 @@ type EventItem = {
   tag?: string | null;
   created_at?: string | null;
   participantsCount?: number;
+  checkedInCount?: number;
 };
 
 export default function EventsAdmin() {
@@ -87,7 +88,14 @@ export default function EventsAdmin() {
             );
             if (participantsRes.ok) {
               const participants = await participantsRes.json();
-              return { ...event, participantsCount: participants.length };
+              const checkedInCount = participants.filter(
+                (p: any) => p.checked_in,
+              ).length;
+              return {
+                ...event,
+                participantsCount: participants.length,
+                checkedInCount,
+              };
             }
           } catch (error) {
             console.error(
@@ -95,7 +103,7 @@ export default function EventsAdmin() {
               error,
             );
           }
-          return { ...event, participantsCount: 0 };
+          return { ...event, participantsCount: 0, checkedInCount: 0 };
         }),
       );
 
@@ -283,7 +291,7 @@ export default function EventsAdmin() {
                         : "TBA"}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm">
-                      {ev.participantsCount ?? 0}
+                      {ev.checkedInCount ?? 0} / {ev.participantsCount ?? 0}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                       {ev.created_at
