@@ -9,7 +9,7 @@ const resend = process.env.RESEND_API_KEY
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { eventId: string } },
+  { params }: { params: Promise<{ eventId: string }> },
 ) {
   try {
     const { email } = await request.json();
@@ -21,7 +21,7 @@ export async function POST(
       );
     }
 
-    const eventId = params.eventId;
+    const { eventId } = await params;
 
     // Check if event exists
     const event = await getEventById(eventId);

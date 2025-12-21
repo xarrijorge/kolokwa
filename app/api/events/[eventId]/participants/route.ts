@@ -3,10 +3,10 @@ import { getParticipantsByEvent } from "@/lib/db/client";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { eventId: string } },
+  { params }: { params: Promise<{ eventId: string }> },
 ) {
   try {
-    const eventId = params.eventId;
+    const { eventId } = await params;
 
     const participants = await getParticipantsByEvent(eventId);
 

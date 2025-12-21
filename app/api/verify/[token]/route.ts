@@ -11,10 +11,10 @@ import QRCode from "qrcode";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { token: string } },
+  { params }: { params: Promise<{ token: string }> },
 ) {
   try {
-    const token = params.token;
+    const { token } = await params;
 
     const pending = await getPendingSignupByToken(token);
     if (!pending) {
@@ -49,7 +49,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { token: string } },
+  { params }: { params: Promise<{ token: string }> },
 ) {
   try {
     const { password, name, username } = await request.json();
@@ -61,7 +61,7 @@ export async function POST(
       );
     }
 
-    const token = params.token;
+    const { token } = await params;
 
     const pending = await getPendingSignupByToken(token);
     if (!pending) {

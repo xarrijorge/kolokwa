@@ -78,6 +78,28 @@ export default function EventDetailPage() {
   });
   const [newSponsor, setNewSponsor] = useState<Sponsor>({ name: "", type: "" });
 
+  function addSpeaker() {
+    if (newSpeaker.name.trim()) {
+      setSpeakers([...speakers, newSpeaker]);
+      setNewSpeaker({ image: "", name: "", position: "", bio: "" });
+    }
+  }
+
+  function removeSpeaker(index: number) {
+    setSpeakers(speakers.filter((_, i) => i !== index));
+  }
+
+  function addSponsor() {
+    if (newSponsor.name.trim()) {
+      setSponsors([...sponsors, newSponsor]);
+      setNewSponsor({ name: "", type: "" });
+    }
+  }
+
+  function removeSponsor(index: number) {
+    setSponsors(sponsors.filter((_, i) => i !== index));
+  }
+
   useEffect(() => {
     async function loadEvent() {
       setLoading(true);

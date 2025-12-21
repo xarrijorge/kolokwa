@@ -3,7 +3,7 @@ import { checkInParticipant, getEventById } from "@/lib/db/client";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { eventId: string } },
+  { params }: { params: Promise<{ eventId: string }> },
 ) {
   try {
     const { qr_data } = await request.json();
@@ -12,7 +12,7 @@ export async function POST(
       return NextResponse.json({ error: "QR data required" }, { status: 400 });
     }
 
-    const eventId = params.eventId;
+    const { eventId } = await params;
 
     // Verify event exists
     const event = await getEventById(eventId);
