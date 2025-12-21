@@ -112,7 +112,7 @@ export default function AdminLayout({
     return () => {
       mounted = false;
     };
-  }, [pathname, router]);
+  }, [router]);
 
   async function handleLogout() {
     try {
@@ -238,7 +238,10 @@ export default function AdminLayout({
                   label={n.label}
                   Icon={n.Icon}
                   active={
-                    pathname === n.href || pathname?.startsWith(n.href + "/")
+                    n.href === "/admin"
+                      ? pathname === "/admin"
+                      : pathname === n.href ||
+                        pathname?.startsWith(n.href + "/")
                   }
                   collapsed={sidebarCollapsed}
                 />
@@ -322,7 +325,7 @@ export default function AdminLayout({
         )}
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 overflow-x-hidden">
+        <main className="flex-1 h-full min-w-0 overflow-x-hidden">
           <div className="p-4 sm:p-6 lg:p-8">{children}</div>
         </main>
       </div>
