@@ -9,7 +9,7 @@ const team = [
   },
   {
     name: "Carlos Nah",
-    role: "Associate Team Leader ",
+    role: "Team Lead ",
     description: "An experienced software engineer with a passion for problem‑solving and clean engineering. He contributes to the Guild’s technical direction, project builds, and developer‑focused initiatives.",
     logo: "/images/pattern-2.png",
   },
