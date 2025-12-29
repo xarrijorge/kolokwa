@@ -3,13 +3,13 @@ import { Card } from "@/components/ui/card"
 const team = [
   {
     name: "Xarri George",
-    role: "Co-Organizer",
+    role: "Team Lead",
     description: "A visionary builder and organizer, Xarri leads the Guild with a focus on community, structure, and long‑term ecosystem impact. With experience in software development and product strategy, he drives the Guild’s mission and ensures its initiatives move with purpose.",
     logo: "/images/pattern-1.png",
   },
   {
-    name: "Carlos Developer",
-    role: "Co-Organizer",
+    name: "Carlos Nah",
+    role: "Associate Team Leader ",
     description: "An experienced software engineer with a passion for problem‑solving and clean engineering. He contributes to the Guild’s technical direction, project builds, and developer‑focused initiatives.",
     logo: "/images/pattern-2.png",
   },
@@ -24,12 +24,6 @@ const team = [
     role: "Co-Organizer",
     description: "Bridges technology and people. She supports the Guild’s development projects while driving community involvement, partnerships, and member experiences.",
     logo: "/images/pattern-4.png",
-  },
-  {
-    name: "Sam Morris",
-    role: "Co-Organizer",
-    description: "Sapes the visual identity of the Guild and its events. From branding to event materials, he ensures every touchpoint reflects the creativity and energy of Liberia’s emerging tech culture.",
-    logo: "/images/pattern-5.png",
   },
 ]
 
